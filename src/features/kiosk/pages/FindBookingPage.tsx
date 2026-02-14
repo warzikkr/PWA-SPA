@@ -1,0 +1,105 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useKioskStore } from '../../../stores/kioskStore';
+import { clientService } from '../../../services/clientService';
+import { bookingService } from '../../../services/bookingService';
+import { Button, Input } from '../../../shared/components';
+import { useKioskInactivity } from '../hooks/useKioskInactivity';
+import type { Booking } from '../../../types';
+
+export function FindBookingPage() {
+  useKioskInactivity();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { setBookingId, setClientId, setIsWalkin } = useKioskStore();
+
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<(Booking & { clientName?: string })[]>([]);
+  const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    try {
+      const clients = await clientService.findByContact(query.trim());
+      const bookings: (Booking & { clientName?: string })[] = [];
+      const today = new Date().toISOString().split('T')[0];
+
+      for (const client of clients) {
+        const clientBookings = await bookingService.findByClientId(client.id);
+        clientBookings
+          .filter((b) => b.date === today)
+          .forEach((b) => bookings.push({ ...b, clientName: client.fullName }));
+      }
+      setResults(bookings);
+      setSearched(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectBooking = (booking: Booking) => {
+    setBookingId(booking.id);
+    setClientId(booking.clientId);
+    navigate('/kiosk/intake');
+  };
+
+  const continueAsWalkin = () => {
+    setIsWalkin(true);
+    navigate('/kiosk/contacts');
+  };
+
+  return (
+    <div className="flex flex-col min-h-full px-6 py-8">
+      <button onClick={() => navigate('/kiosk')} className="text-brand-muted mb-6 self-start">&larr; {t('common.back')}</button>
+
+      <h2 className="font-serif text-2xl font-bold text-brand-dark text-center mb-2">
+        {t('kiosk.findBooking')}
+      </h2>
+      <p className="text-brand-muted text-center mb-8">
+        {t('kiosk.findBookingHint')}
+      </p>
+
+      <div className="max-w-sm mx-auto w-full flex flex-col gap-4">
+        <Input
+          placeholder={t('kiosk.findBookingPlaceholder')}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+        />
+        <Button fullWidth onClick={handleSearch} disabled={loading}>
+          {loading ? t('common.loading') : t('common.search')}
+        </Button>
+
+        {searched && results.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-brand-muted mb-4">{t('kiosk.noBookingFound')}</p>
+            <Button variant="outline" fullWidth onClick={continueAsWalkin}>
+              {t('kiosk.walkInFallback')}
+            </Button>
+          </div>
+        )}
+
+        {results.length > 0 && (
+          <div className="flex flex-col gap-3 mt-4">
+            <p className="text-sm font-medium text-brand-dark">{t('kiosk.findBooking')}:</p>
+            {results.map((b) => (
+              <button
+                key={b.id}
+                onClick={() => selectBooking(b)}
+                className="p-4 border-2 border-brand-border rounded-lg text-left hover:border-brand-green transition-colors"
+              >
+                <div className="font-medium text-brand-dark">{b.clientName}</div>
+                <div className="text-sm text-brand-muted">
+                  {b.startTime && `${b.startTime} — `}{b.status}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

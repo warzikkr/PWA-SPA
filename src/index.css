@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-green: #2D8540;
+  --color-brand-gold: #B8974B;
+  --color-brand-dark: #333333;
+  --color-brand-muted: #999999;
+  --color-brand-light: #f5f5f5;
+  --color-brand-border: #e0e0e0;
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'Inter', sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.kiosk-mode {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
+}
+
+/* ===== Print styles ===== */
+@media print {
+  /* Hide everything except the print sheet */
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide nav, sidebar, header, buttons, interactive elements */
+  nav,
+  header,
+  .no-print,
+  button:not(.print-keep),
+  textarea,
+  select {
+    display: none !important;
+  }
+
+  /* Show the print-only sheet */
+  .print-session-sheet {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    background: white;
+    padding: 0;
+  }
+
+  /* Reset layout containers */
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* A4 page setup */
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  /* High-contrast body map for printing */
+  .print-session-sheet .bg-blue-500\/30 {
+    background-color: rgba(59, 130, 246, 0.4) !important;
+  }
+  .print-session-sheet .bg-red-500\/30 {
+    background-color: rgba(239, 68, 68, 0.4) !important;
+  }
+  .print-session-sheet .border-blue-500 {
+    border-color: rgb(59, 130, 246) !important;
+  }
+  .print-session-sheet .border-red-500 {
+    border-color: rgb(239, 68, 68) !important;
+  }
+}
