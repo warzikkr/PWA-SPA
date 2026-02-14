@@ -1,5 +1,5 @@
 const CACHE_NAME = 'spa-salon-v1';
-const STATIC_ASSETS = ['/', '/index.html'];
+const STATIC_ASSETS = ['/PWA-SPA/', '/PWA-SPA/index.html'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

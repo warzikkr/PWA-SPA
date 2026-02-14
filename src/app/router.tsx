@@ -31,6 +31,8 @@ import { ReceptionDashboardPage } from '../features/reception/pages/ReceptionDas
 import { MyTodayPage } from '../features/therapist/pages/MyTodayPage';
 import { SessionDetailPage } from '../features/therapist/pages/SessionDetailPage';
 
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -101,4 +103,4 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+], { basename });
