@@ -15,15 +15,13 @@ export function LoginPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const loading = useAuthStore((s) => s.loading);
   const login = useAuthStore((s) => s.login);
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Still restoring session — show nothing briefly
   if (loading) return null;
 
-  // Already authenticated — redirect via component (not navigate during render)
   if (currentUser) {
     return <Navigate to={roleRedirects[currentUser.role]} replace />;
   }
@@ -32,7 +30,11 @@ export function LoginPage() {
     e.preventDefault();
     setError('');
     setSubmitting(true);
-    const result = await login(email.trim(), password);
+    // Convert username to email for Supabase Auth
+    const email = username.trim().includes('@')
+      ? username.trim()
+      : `${username.trim()}@spa.local`;
+    const result = await login(email, password);
     setSubmitting(false);
     if (result.success) {
       const user = useAuthStore.getState().currentUser!;
@@ -53,11 +55,10 @@ export function LoginPage() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input
-              label="Email"
-              type="email"
-              placeholder="Enter email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              label="Username"
+              placeholder="Enter username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               autoFocus
             />
             <Input
