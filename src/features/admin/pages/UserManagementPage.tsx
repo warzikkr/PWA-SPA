@@ -144,7 +144,7 @@ export function UserManagementPage() {
                   </td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => handleResetPassword(`${u.username}@spa.local`)}
+                      onClick={() => handleResetPassword(`${u.username}@spadev.app`)}
                       className="text-xs text-brand-green hover:underline"
                     >
                       Reset Password
@@ -175,7 +175,7 @@ export function UserManagementPage() {
           <Input
             label="Email"
             type="email"
-            placeholder="user@spa.local"
+            placeholder="user@spadev.app"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />

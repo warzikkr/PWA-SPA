@@ -33,7 +33,7 @@ export function LoginPage() {
     // Convert username to email for Supabase Auth
     const email = username.trim().includes('@')
       ? username.trim()
-      : `${username.trim()}@spa.local`;
+      : `${username.trim()}@spadev.app`;
     const result = await login(email, password);
     setSubmitting(false);
     if (result.success) {
