@@ -1,3 +1,11 @@
+/**
+ * ContactsPage — Screen 1: Client details.
+ *
+ * - Full Name (required)
+ * - Gender as segmented buttons (side-by-side)
+ * - Contact Method as dropdown select
+ * - Contact Value with dynamic placeholder based on method
+ */
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useKioskStore } from '../../../stores/kioskStore';
 import { useConfigStore } from '../../../stores/configStore';
 import { useClientStore } from '../../../stores/clientStore';
-import { Input, CardSelector } from '../../../shared/components';
+import { Input, SegmentedControl, Select } from '../../../shared/components';
 import { useKioskInactivity } from '../hooks/useKioskInactivity';
 
 const schema = z.object({
@@ -17,6 +25,15 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
+
+/* Dynamic placeholder map per contact method */
+const CONTACT_PLACEHOLDERS: Record<string, string> = {
+  whatsapp: 'Enter WhatsApp number',
+  phone: 'Enter phone number',
+  telegram: 'Enter Telegram username',
+  email: 'Enter email address',
+  instagram: 'Enter Instagram handle',
+};
 
 export function ContactsPage() {
   useKioskInactivity();
@@ -30,6 +47,7 @@ export function ContactsPage() {
     register,
     control,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -40,6 +58,8 @@ export function ContactsPage() {
       contactValue: '',
     },
   });
+
+  const selectedMethod = watch('contactMethod');
 
   const onSubmit = async (data: FormData) => {
     const client = await findOrCreate({
@@ -75,9 +95,7 @@ export function ContactsPage() {
       updateFormData(prefData);
     }
 
-    // Also store gender in intake formData for historical record
     updateFormData({ gender: data.gender });
-
     navigate('/kiosk/intake');
   };
 
@@ -96,8 +114,9 @@ export function ContactsPage() {
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="max-w-sm mx-auto w-full flex flex-col gap-5 pb-28"
+        className="max-w-md mx-auto w-full flex flex-col gap-6 pb-28"
       >
+        {/* Full Name */}
         <Input
           label={t('kiosk.fullName')}
           placeholder={t('kiosk.fullNamePlaceholder')}
@@ -105,51 +124,59 @@ export function ContactsPage() {
           error={errors.fullName?.message}
         />
 
+        {/* Gender — segmented buttons */}
         <Controller
           name="gender"
           control={control}
           render={({ field }) => (
-            <CardSelector
+            <SegmentedControl
               label={t('kiosk.gender', 'Gender')}
               options={[
                 { id: 'male', label: t('kiosk.male', 'Male') },
                 { id: 'female', label: t('kiosk.female', 'Female') },
               ]}
               value={field.value ?? ''}
-              onChange={(v) => field.onChange(v)}
+              onChange={field.onChange}
               error={errors.gender?.message}
             />
           )}
         />
 
+        {/* Contact Method — dropdown */}
         <Controller
           name="contactMethod"
           control={control}
           render={({ field }) => (
-            <CardSelector
+            <Select
               label={t('kiosk.contactMethod')}
               options={config.contactMethods
                 .filter((c) => c.enabled)
-                .map((c) => ({ id: c.id, label: c.label }))}
+                .map((c) => ({ value: c.id, label: c.label }))}
+              placeholder={t('common.selectPlaceholder', 'Select...')}
               value={field.value}
-              onChange={(v) => field.onChange(v)}
+              onChange={field.onChange}
               error={errors.contactMethod?.message}
             />
           )}
         />
 
+        {/* Contact Value — dynamic placeholder */}
         <Input
           label={t('kiosk.contactValue')}
-          placeholder={t('kiosk.contactValuePlaceholder')}
+          placeholder={
+            CONTACT_PLACEHOLDERS[selectedMethod] ??
+            t('kiosk.contactValuePlaceholder')
+          }
           {...register('contactValue')}
           error={errors.contactValue?.message}
         />
 
+        {/* Fixed bottom button */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-brand-border">
-          <div className="max-w-sm mx-auto">
+          <div className="max-w-md mx-auto">
             <button
               type="submit"
-              className="w-full min-h-[52px] rounded-lg bg-brand-dark text-white font-medium text-lg"
+              className="w-full min-h-[56px] rounded-xl bg-brand-dark text-white font-medium text-lg active:scale-[0.98] transition-transform"
             >
               {t('common.continue')}
             </button>

@@ -1,8 +1,11 @@
 /**
- * SessionPrefsStep — Combined session type + pressure + deep tissue.
+ * SessionPrefsStep — Screen 2: Session Preferences.
  *
- * Combined session type decomposes into separate `duration` and `goal` keys
- * for backward compatibility with existing data model.
+ * Separate fields: Duration (large cards), Goal (multi-select),
+ * Pressure (segmented), Deep Tissue (toggle).
+ *
+ * Writes standard `duration`, `goal`, `pressure`, `deep_tissue` keys
+ * for full backward compatibility.
  */
 import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -10,15 +13,9 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CardSelector, SegmentedControl, Toggle } from '../../../shared/components';
 
-/* ── Combined session type options ── */
-const SESSION_TYPES = [
-  { id: '60_relax', label: '60 min – Relax', duration: '60', goal: ['relax'] },
-  { id: '90_deep_relief', label: '90 min – Deep Relief', duration: '90', goal: ['pain_relief'] },
-  { id: '120_sports', label: '120 min – Sports Recovery', duration: '120', goal: ['sports_recovery'] },
-] as const;
-
 const schema = z.object({
-  session_type: z.string().min(1, 'Please select a session type'),
+  duration: z.string().min(1, 'Please select a duration'),
+  goal: z.array(z.string()).min(1, 'Please select at least one goal'),
   pressure: z.string().min(1, 'Please select pressure'),
   deep_tissue: z.boolean().optional(),
 });
@@ -41,40 +38,67 @@ export function SessionPrefsStep({ defaultValues, onSubmit, onBack }: Props) {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      session_type: (defaultValues.session_type as string) ?? '',
+      duration: (defaultValues.duration as string) ?? '',
+      goal: (defaultValues.goal as string[]) ?? [],
       pressure: (defaultValues.pressure as string) ?? '',
       deep_tissue: (defaultValues.deep_tissue as boolean) ?? false,
     },
   });
 
   const handleFormSubmit = (data: FormData) => {
-    // Decompose combined session type into separate duration + goal keys
-    const sessionDef = SESSION_TYPES.find((s) => s.id === data.session_type);
     onSubmit({
-      session_type: data.session_type,
-      duration: sessionDef?.duration ?? '',
-      goal: sessionDef?.goal ?? [],
+      duration: data.duration,
+      goal: data.goal,
       pressure: data.pressure,
       deep_tissue: data.deep_tissue ?? false,
     });
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
+      {/* Duration — large selectable cards */}
       <Controller
-        name="session_type"
+        name="duration"
         control={control}
         render={({ field }) => (
           <CardSelector
-            label={t('kiosk.sessionType', 'Session Type')}
-            options={SESSION_TYPES.map((s) => ({ id: s.id, label: s.label }))}
+            label={t('kiosk.duration', 'Session Duration')}
+            options={[
+              { id: '60', label: '60 min' },
+              { id: '90', label: '90 min' },
+              { id: '120', label: '120 min' },
+            ]}
             value={field.value}
             onChange={(v) => field.onChange(v)}
-            error={errors.session_type?.message}
+            error={errors.duration?.message}
           />
         )}
       />
 
+      {/* Goal — multi-select cards */}
+      <Controller
+        name="goal"
+        control={control}
+        render={({ field }) => (
+          <CardSelector
+            label={t('kiosk.goal', 'Session Goal')}
+            multiple
+            options={[
+              { id: 'relax', label: t('kiosk.goalRelax', 'Relaxation') },
+              { id: 'pain_relief', label: t('kiosk.goalPain', 'Pain Relief') },
+              { id: 'sports_recovery', label: t('kiosk.goalSports', 'Sports Recovery') },
+              { id: 'sleep', label: t('kiosk.goalSleep', 'Sleep') },
+              { id: 'lymphatic', label: t('kiosk.goalLymphatic', 'Lymphatic') },
+              { id: 'other', label: t('kiosk.goalOther', 'Other') },
+            ]}
+            value={(field.value as string[]) ?? []}
+            onChange={(v) => field.onChange(v)}
+            error={errors.goal?.message}
+          />
+        )}
+      />
+
+      {/* Pressure — segmented control */}
       <Controller
         name="pressure"
         control={control}
@@ -93,6 +117,7 @@ export function SessionPrefsStep({ defaultValues, onSubmit, onBack }: Props) {
         )}
       />
 
+      {/* Deep Tissue — toggle */}
       <Controller
         name="deep_tissue"
         control={control}
@@ -105,17 +130,18 @@ export function SessionPrefsStep({ defaultValues, onSubmit, onBack }: Props) {
         )}
       />
 
-      <div className="flex gap-3 pt-4">
+      {/* Nav buttons */}
+      <div className="flex gap-3 pt-2">
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 py-3 px-4 rounded-lg border border-brand-border text-brand-dark font-medium"
+          className="flex-1 min-h-[52px] rounded-xl border border-brand-border text-brand-dark font-medium text-base active:scale-[0.98] transition-transform"
         >
           {t('common.back')}
         </button>
         <button
           type="submit"
-          className="flex-1 py-3 px-4 rounded-lg bg-brand-dark text-white font-medium"
+          className="flex-1 min-h-[52px] rounded-xl bg-brand-dark text-white font-medium text-base active:scale-[0.98] transition-transform"
         >
           {t('common.continue')}
         </button>

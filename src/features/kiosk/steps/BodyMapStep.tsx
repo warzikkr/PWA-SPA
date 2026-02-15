@@ -1,7 +1,8 @@
 /**
- * BodyMapStep — Focus & Avoid zones on one screen.
+ * BodyMapStep — Screen 3: Focus & Avoid areas.
  *
- * Two UnifiedBodyMap instances (focus + avoid). No max selection limits.
+ * Two UnifiedBodyMap instances with clear section headers,
+ * clean spacing, and unlimited selection.
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,13 +33,13 @@ export function BodyMapStep({ defaultValues, onSubmit, onBack }: Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Focus zones */}
-      <div>
-        <h3 className="text-sm font-semibold text-brand-dark mb-2">
+      <div className="bg-blue-50/50 rounded-xl p-4">
+        <h3 className="text-base font-semibold text-brand-dark mb-1">
           {t('kiosk.focusAreas', 'Focus Areas')}
         </h3>
-        <p className="text-xs text-brand-muted mb-3">
+        <p className="text-sm text-brand-muted mb-4">
           {t('kiosk.focusAreasHint', 'Select areas you want us to focus on')}
         </p>
         <UnifiedBodyMap
@@ -51,11 +52,11 @@ export function BodyMapStep({ defaultValues, onSubmit, onBack }: Props) {
       </div>
 
       {/* Avoid zones */}
-      <div>
-        <h3 className="text-sm font-semibold text-brand-dark mb-2">
+      <div className="bg-red-50/50 rounded-xl p-4">
+        <h3 className="text-base font-semibold text-brand-dark mb-1">
           {t('kiosk.avoidAreas', 'Avoid Areas')}
         </h3>
-        <p className="text-xs text-brand-muted mb-3">
+        <p className="text-sm text-brand-muted mb-4">
           {t('kiosk.avoidAreasHint', 'Select areas you want us to avoid')}
         </p>
         <UnifiedBodyMap
@@ -67,18 +68,19 @@ export function BodyMapStep({ defaultValues, onSubmit, onBack }: Props) {
         />
       </div>
 
-      <div className="flex gap-3 pt-4">
+      {/* Nav buttons */}
+      <div className="flex gap-3 pt-2">
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 py-3 px-4 rounded-lg border border-brand-border text-brand-dark font-medium"
+          className="flex-1 min-h-[52px] rounded-xl border border-brand-border text-brand-dark font-medium text-base active:scale-[0.98] transition-transform"
         >
           {t('common.back')}
         </button>
         <button
           type="button"
           onClick={handleSubmit}
-          className="flex-1 py-3 px-4 rounded-lg bg-brand-dark text-white font-medium"
+          className="flex-1 min-h-[52px] rounded-xl bg-brand-dark text-white font-medium text-base active:scale-[0.98] transition-transform"
         >
           {t('common.continue')}
         </button>

@@ -1,8 +1,11 @@
 /**
- * IntakeWizardPage — Multi-step intake using custom step components.
+ * IntakeWizardPage — 4-step intake wizard using custom step components.
  *
- * Replaces config-driven FormRenderer with 5 custom steps that support
- * conditional logic, combined fields, and gender-based visibility.
+ * Steps:
+ *   1. Session Preferences (duration, goal, pressure, deep tissue)
+ *   2. Focus & Avoid (body maps)
+ *   3. Health & Sensitivity (medical + allergies + oil + smell)
+ *   4. Atmosphere (music, volume, light) — final submit
  *
  * Data keys remain backward-compatible with existing intake model.
  */
@@ -16,16 +19,13 @@ import {
   SessionPrefsStep,
   BodyMapStep,
   HealthStep,
-  AllergiesStep,
   AtmosphereStep,
 } from '../steps';
 
-/* ── Step definitions ── */
 const STEPS = [
   { id: 'session_prefs', title: 'Session Preferences' },
   { id: 'body_map', title: 'Focus & Avoid' },
-  { id: 'health', title: 'Health' },
-  { id: 'allergies', title: 'Allergies & Preferences' },
+  { id: 'health', title: 'Health & Sensitivity' },
   { id: 'atmosphere', title: 'Atmosphere' },
 ] as const;
 
@@ -73,7 +73,6 @@ export function IntakeWizardPage() {
     }
   };
 
-  /* ── Render step component ── */
   const renderStep = () => {
     const props = { defaultValues: formData, onSubmit: handleStepSubmit, onBack: handleBack };
 
@@ -84,15 +83,8 @@ export function IntakeWizardPage() {
         return <BodyMapStep {...props} />;
       case 'health':
         return <HealthStep {...props} />;
-      case 'allergies':
-        return <AllergiesStep {...props} />;
       case 'atmosphere':
-        return (
-          <AtmosphereStep
-            {...props}
-            submitLabel={t('common.submit')}
-          />
-        );
+        return <AtmosphereStep {...props} submitLabel={t('common.submit')} />;
       default:
         return null;
     }
@@ -100,16 +92,16 @@ export function IntakeWizardPage() {
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="pt-6 pb-4">
+      <div className="pt-6 pb-4 px-6">
         <StepProgress steps={STEPS.map((s) => s.title)} current={intakeStep} />
       </div>
 
       <div className="px-6 pb-28">
-        <h2 className="font-serif text-2xl font-bold text-brand-dark text-center mb-1">
+        <h2 className="font-serif text-2xl font-bold text-brand-dark text-center mb-6">
           {currentStep.title}
         </h2>
 
-        <div className="max-w-sm mx-auto mt-6">
+        <div className="max-w-md mx-auto">
           {renderStep()}
         </div>
       </div>
