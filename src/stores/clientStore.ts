@@ -33,13 +33,26 @@ export const useClientStore = create<ClientState>()((set, get) => ({
   getById: (id) => get().clients.find((c) => c.id === id),
 
   findOrCreate: async (data) => {
-    // Match by email (case-insensitive)
-    const existing = await clientService.findByContact(data.email);
-    if (existing.length > 0) {
-      const client = existing[0];
-      const clients = await clientService.list();
-      set({ clients });
-      return client;
+    // Match by contactValue (primary identifier since email was removed from kiosk)
+    const query = data.contactValue?.trim();
+    if (query) {
+      const existing = await clientService.findByContact(query);
+      // Only match if contactMethod + contactValue both match exactly
+      const exact = existing.find(
+        (c) =>
+          c.contactMethod === data.contactMethod &&
+          c.contactValue.toLowerCase() === query.toLowerCase(),
+      );
+      if (exact) {
+        // Update name/gender if changed
+        await clientService.update(exact.id, {
+          fullName: data.fullName,
+          gender: data.gender,
+        });
+        const clients = await clientService.list();
+        set({ clients });
+        return { ...exact, fullName: data.fullName, gender: data.gender };
+      }
     }
     // Create new
     const client = await clientService.create(data);

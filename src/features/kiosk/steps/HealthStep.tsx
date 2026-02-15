@@ -89,8 +89,11 @@ export function HealthStep({ defaultValues, onSubmit, onBack }: Props) {
   const showPregnancy = gender === 'female';
 
   const handleFormSubmit = (data: FormData) => {
+    // Oil preference is always submitted (outside health toggle)
+    const oilData = { oil_preference: data.oil_preference ?? '' };
+
     if (!data.has_health_conditions) {
-      // Explicitly clear all health + allergy fields so stale data doesn't persist
+      // Clear health + allergy fields; keep oil preference
       onSubmit({
         has_health_conditions: false,
         pregnancy: 'no',
@@ -102,8 +105,8 @@ export function HealthStep({ defaultValues, onSubmit, onBack }: Props) {
         pain_scale: 0,
         pain_location: '',
         allergies: [],
-        oil_preference: '',
         smell_sensitivity: false,
+        ...oilData,
       });
       return;
     }
@@ -118,8 +121,8 @@ export function HealthStep({ defaultValues, onSubmit, onBack }: Props) {
       pain_scale: data.pain_scale ?? 0,
       pain_location: data.pain_location || '',
       allergies: data.allergies ?? [],
-      oil_preference: data.oil_preference ?? '',
       smell_sensitivity: data.smell_sensitivity ?? false,
+      ...oilData,
     });
   };
 
@@ -288,10 +291,10 @@ export function HealthStep({ defaultValues, onSubmit, onBack }: Props) {
             )}
           />
 
-          {/* ─── Allergies & Preferences section ─── */}
+          {/* ─── Allergies section (inside health toggle) ─── */}
           <div className="border-t border-brand-border pt-6 space-y-5">
             <h3 className="text-base font-semibold text-brand-dark">
-              {t('kiosk.allergiesAndOil', 'Allergies & Preferences')}
+              {t('kiosk.allergiesTitle', 'Allergies')}
             </h3>
 
             {/* Allergies — multi-select tags */}
@@ -304,20 +307,6 @@ export function HealthStep({ defaultValues, onSubmit, onBack }: Props) {
                   multiple
                   options={ALLERGY_OPTIONS}
                   value={(field.value as string[]) ?? []}
-                  onChange={(v) => field.onChange(v)}
-                />
-              )}
-            />
-
-            {/* Oil preference — tile buttons */}
-            <Controller
-              name="oil_preference"
-              control={control}
-              render={({ field }) => (
-                <CardSelector
-                  label={t('kiosk.oilPreference', 'Oil Preference')}
-                  options={OIL_OPTIONS}
-                  value={field.value ?? ''}
                   onChange={(v) => field.onChange(v)}
                 />
               )}
@@ -338,6 +327,25 @@ export function HealthStep({ defaultValues, onSubmit, onBack }: Props) {
           </div>
         </div>
       )}
+
+      {/* ─── Oil preference — always visible on this page ─── */}
+      <div className="space-y-2">
+        <h3 className="text-base font-semibold text-brand-dark">
+          {t('kiosk.oilPreferenceTitle', 'Oil Preference')}
+        </h3>
+        <Controller
+          name="oil_preference"
+          control={control}
+          render={({ field }) => (
+            <CardSelector
+              label=""
+              options={OIL_OPTIONS}
+              value={field.value ?? ''}
+              onChange={(v) => field.onChange(v)}
+            />
+          )}
+        />
+      </div>
 
       {/* Nav buttons */}
       <div className="flex gap-3 pt-2">

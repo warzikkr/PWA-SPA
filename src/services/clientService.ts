@@ -20,11 +20,12 @@ export const clientService = {
 
   async findByContact(query: string): Promise<Client[]> {
     const q = query.toLowerCase().trim();
+    if (!q) return []; // empty query must never match all clients
     return getAll().filter(
       (c) =>
         c.email.toLowerCase().includes(q) ||
         c.contactValue.toLowerCase().includes(q) ||
-        c.fullName.toLowerCase().includes(q)
+        c.fullName.toLowerCase().includes(q),
     );
   },
 
