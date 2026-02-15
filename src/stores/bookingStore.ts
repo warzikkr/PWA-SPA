@@ -3,21 +3,27 @@
  *
  * SOURCE OF TRUTH: bookingService (localStorage via spa_bookings).
  * No Zustand persist — eliminates dual-persistence / stale-hydration bugs.
- * Each page calls loadBookings() or loadToday() on mount to get fresh data.
+ *
+ * All consumers call loadBookings() to get the full list and filter in render.
+ * loadToday / getByTherapistToday removed — they caused partial overwrites
+ * and broke cross-role synchronization.
+ *
+ * Cross-tab sync: subscribeBookingSync() listens for localStorage changes
+ * from other tabs (kiosk, reception, etc.) and reloads automatically.
  */
 import { create } from 'zustand';
 import type { Booking } from '../types';
 import { bookingService } from '../services/bookingService';
 
+const STORAGE_KEY = 'spa_bookings';
+
 interface BookingState {
   bookings: Booking[];
   loading: boolean;
   loadBookings: () => Promise<void>;
-  loadToday: () => Promise<void>;
   addBooking: (data: Omit<Booking, 'id' | 'createdAt'>) => Promise<Booking>;
   updateBooking: (id: string, data: Partial<Booking>) => Promise<void>;
   findByClientId: (clientId: string) => Promise<Booking[]>;
-  getByTherapistToday: (therapistId: string) => Promise<Booking[]>;
 }
 
 export const useBookingStore = create<BookingState>()((set) => ({
@@ -29,14 +35,8 @@ export const useBookingStore = create<BookingState>()((set) => ({
     set({ bookings, loading: false });
   },
 
-  loadToday: async () => {
-    const bookings = await bookingService.getToday();
-    set({ bookings, loading: false });
-  },
-
   addBooking: async (data) => {
     const booking = await bookingService.create(data);
-    // Re-read full list so store is consistent
     const bookings = await bookingService.list();
     set({ bookings });
     return booking;
@@ -51,8 +51,19 @@ export const useBookingStore = create<BookingState>()((set) => ({
   findByClientId: async (clientId) => {
     return bookingService.findByClientId(clientId);
   },
-
-  getByTherapistToday: async (therapistId) => {
-    return bookingService.getByTherapistToday(therapistId);
-  },
 }));
+
+/**
+ * Cross-tab sync: when another tab writes to spa_bookings in localStorage,
+ * reload the in-memory store so all roles see updates immediately.
+ * Returns cleanup function.
+ */
+export function subscribeBookingSync(): () => void {
+  const handler = (e: StorageEvent) => {
+    if (e.key === STORAGE_KEY) {
+      useBookingStore.getState().loadBookings();
+    }
+  };
+  window.addEventListener('storage', handler);
+  return () => window.removeEventListener('storage', handler);
+}

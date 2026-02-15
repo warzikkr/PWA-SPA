@@ -3,8 +3,9 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
 import { useConfigStore } from '../stores/configStore';
 import { useClientStore } from '../stores/clientStore';
-import { useBookingStore } from '../stores/bookingStore';
-import { useIntakeStore } from '../stores/intakeStore';
+import { useBookingStore, subscribeBookingSync } from '../stores/bookingStore';
+import { useIntakeStore, subscribeIntakeSync } from '../stores/intakeStore';
+import { subscribeClientSync } from '../stores/clientStore';
 import { useUserStore } from '../stores/userStore';
 import { useTherapistNoteStore } from '../stores/therapistNoteStore';
 import { useChangeRequestStore } from '../stores/changeRequestStore';
@@ -29,6 +30,16 @@ export function App() {
     loadNotes();
     loadRequests();
   }, [loadConfig, loadClients, loadBookings, loadIntakes, loadUsers, loadNotes, loadRequests]);
+
+  // Cross-tab sync: reload stores when another tab writes to localStorage
+  useEffect(() => {
+    const unsubs = [
+      subscribeBookingSync(),
+      subscribeClientSync(),
+      subscribeIntakeSync(),
+    ];
+    return () => unsubs.forEach((fn) => fn());
+  }, []);
 
   return <RouterProvider router={router} />;
 }

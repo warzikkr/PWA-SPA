@@ -1,51 +1,95 @@
-import { useEffect, useState } from 'react';
+/**
+ * MyTodayPage — Therapist dashboard.
+ *
+ * Subscribes to useBookingStore.bookings and filters by therapistId + today.
+ * Polls every 15s (same pattern as Admin/Reception) for cross-tab consistency.
+ */
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../../stores/authStore';
 import { useBookingStore } from '../../../stores/bookingStore';
 import { useConfigStore } from '../../../stores/configStore';
+import { useClientStore } from '../../../stores/clientStore';
 import { clientService } from '../../../services/clientService';
 import { intakeService } from '../../../services/intakeService';
 import { getTherapistClientView, type TherapistClientView } from '../../../stores/selectors/therapistSessionView';
 import { SessionCard } from '../components/SessionCard';
-import type { Intake, Booking } from '../../../types';
+import type { Intake } from '../../../types';
+
+const POLL_INTERVAL = 15_000;
 
 export function MyTodayPage() {
   const { t } = useTranslation();
   const currentUser = useAuthStore((s) => s.currentUser);
   const therapistId = currentUser?.therapistId;
   const config = useConfigStore((s) => s.config);
-  const { getByTherapistToday } = useBookingStore();
 
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  // Subscribe to the shared booking store — reactive to all updates
+  const { bookings: allBookings, loadBookings } = useBookingStore();
+  const loadClients = useClientStore((s) => s.loadClients);
+
   const [clients, setClients] = useState<Record<string, TherapistClientView>>({});
   const [intakes, setIntakes] = useState<Record<string, Intake>>({});
 
-  useEffect(() => {
-    if (!therapistId) return;
-    getByTherapistToday(therapistId).then(async (bks) => {
-      setBookings(bks);
+  // Polling — same as Admin/Reception dashboards
+  const refresh = useCallback(() => {
+    loadBookings();
+    loadClients();
+  }, [loadBookings, loadClients]);
 
+  useEffect(() => {
+    refresh();
+    const timer = setInterval(refresh, POLL_INTERVAL);
+    return () => clearInterval(timer);
+  }, [refresh]);
+
+  // Filter from store: therapistId + today
+  const today = new Date().toISOString().split('T')[0];
+  const myBookings = useMemo(
+    () =>
+      allBookings.filter(
+        (b) => b.therapistId === therapistId && b.date === today,
+      ),
+    [allBookings, therapistId, today],
+  );
+
+  // Load client/intake data when booking list changes
+  useEffect(() => {
+    if (myBookings.length === 0) {
+      setClients({});
+      setIntakes({});
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
       const clientMap: Record<string, TherapistClientView> = {};
       const intakeMap: Record<string, Intake> = {};
 
-      for (const b of bks) {
+      for (const b of myBookings) {
         const c = await clientService.getById(b.clientId);
-        // MIGRATION: strip contact fields — therapist must not see them
         if (c) clientMap[c.id] = getTherapistClientView(c);
         const i = await intakeService.getByBookingId(b.id);
         if (i) intakeMap[b.id] = i;
       }
 
-      setClients(clientMap);
-      setIntakes(intakeMap);
-    });
-  }, [therapistId, getByTherapistToday]);
+      if (!cancelled) {
+        setClients(clientMap);
+        setIntakes(intakeMap);
+      }
+    })();
 
-  const now = bookings.find((b) => b.status === 'in_progress');
-  const upcoming = bookings
+    return () => {
+      cancelled = true;
+    };
+  }, [myBookings]);
+
+  const now = myBookings.find((b) => b.status === 'in_progress');
+  const upcoming = myBookings
     .filter((b) => b.status !== 'in_progress' && b.status !== 'done')
     .sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''));
-  const done = bookings.filter((b) => b.status === 'done');
+  const done = myBookings.filter((b) => b.status === 'done');
 
   return (
     <div className="space-y-6">

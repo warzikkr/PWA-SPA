@@ -19,7 +19,7 @@ export function BookingDetailPage() {
   const location = useLocation();
   // Detect parent route for back navigation
   const parentRoute = location.pathname.startsWith('/reception') ? '/reception' : '/admin';
-  const { bookings, updateBooking, loadToday } = useBookingStore();
+  const { bookings, updateBooking, loadBookings } = useBookingStore();
   const { getByBookingId } = useIntakeStore();
   const config = useConfigStore((s) => s.config);
 
@@ -31,8 +31,8 @@ export function BookingDetailPage() {
   const booking = bookings.find((b) => b.id === id);
 
   useEffect(() => {
-    loadToday();
-  }, [loadToday]);
+    loadBookings();
+  }, [loadBookings]);
 
   useEffect(() => {
     if (!booking) return;

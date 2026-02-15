@@ -3,6 +3,8 @@
  *
  * SOURCE OF TRUTH: clientService (localStorage via spa_clients).
  * No Zustand persist — eliminates dual-persistence / stale-hydration bugs.
+ *
+ * Cross-tab sync: subscribeClientSync() reloads when another tab writes.
  */
 import { create } from 'zustand';
 import type { Client, ClientPreferences, ClientAuditLog } from '../types';
@@ -97,3 +99,16 @@ export const useClientStore = create<ClientState>()((set, get) => ({
     set({ clients });
   },
 }));
+
+const CLIENT_STORAGE_KEY = 'spa_clients';
+
+/** Cross-tab sync for clients. Returns cleanup function. */
+export function subscribeClientSync(): () => void {
+  const handler = (e: StorageEvent) => {
+    if (e.key === CLIENT_STORAGE_KEY) {
+      useClientStore.getState().loadClients();
+    }
+  };
+  window.addEventListener('storage', handler);
+  return () => window.removeEventListener('storage', handler);
+}

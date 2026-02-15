@@ -16,7 +16,7 @@ export function SessionDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { bookings, updateBooking, loadToday } = useBookingStore();
+  const { bookings, updateBooking, loadBookings } = useBookingStore();
   const config = useConfigStore((s) => s.config);
 
   // MIGRATION: use TherapistClientView — contact fields stripped at data layer
@@ -27,8 +27,8 @@ export function SessionDetailPage() {
   const booking = bookings.find((b) => b.id === id);
 
   useEffect(() => {
-    loadToday();
-  }, [loadToday]);
+    loadBookings();
+  }, [loadBookings]);
 
   useEffect(() => {
     if (!booking) return;
