@@ -1,5 +1,10 @@
+/**
+ * intakeStore — Zustand store for intakes.
+ *
+ * SOURCE OF TRUTH: intakeService (localStorage via spa_intakes).
+ * No Zustand persist — eliminates dual-persistence / stale-hydration bugs.
+ */
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { Intake } from '../types';
 import { intakeService } from '../services/intakeService';
 
@@ -11,31 +16,23 @@ interface IntakeState {
   getByBookingId: (bookingId: string) => Promise<Intake | undefined>;
 }
 
-export const useIntakeStore = create<IntakeState>()(
-  persist(
-    (set) => ({
-      intakes: [],
-      loading: true,
+export const useIntakeStore = create<IntakeState>()((set) => ({
+  intakes: [],
+  loading: true,
 
-      loadIntakes: async () => {
-        const intakes = await intakeService.list();
-        set({ intakes, loading: false });
-      },
+  loadIntakes: async () => {
+    const intakes = await intakeService.list();
+    set({ intakes, loading: false });
+  },
 
-      addIntake: async (data) => {
-        const intake = await intakeService.create(data);
-        const intakes = await intakeService.list();
-        set({ intakes });
-        return intake;
-      },
+  addIntake: async (data) => {
+    const intake = await intakeService.create(data);
+    const intakes = await intakeService.list();
+    set({ intakes });
+    return intake;
+  },
 
-      getByBookingId: async (bookingId) => {
-        return intakeService.getByBookingId(bookingId);
-      },
-    }),
-    {
-      name: 'spa_intake_store',
-      partialize: (state) => ({ intakes: state.intakes }),
-    },
-  ),
-);
+  getByBookingId: async (bookingId) => {
+    return intakeService.getByBookingId(bookingId);
+  },
+}));

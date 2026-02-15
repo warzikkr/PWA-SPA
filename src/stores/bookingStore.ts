@@ -1,5 +1,11 @@
+/**
+ * bookingStore — Zustand store for bookings.
+ *
+ * SOURCE OF TRUTH: bookingService (localStorage via spa_bookings).
+ * No Zustand persist — eliminates dual-persistence / stale-hydration bugs.
+ * Each page calls loadBookings() or loadToday() on mount to get fresh data.
+ */
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { Booking } from '../types';
 import { bookingService } from '../services/bookingService';
 
@@ -14,46 +20,39 @@ interface BookingState {
   getByTherapistToday: (therapistId: string) => Promise<Booking[]>;
 }
 
-export const useBookingStore = create<BookingState>()(
-  persist(
-    (set) => ({
-      bookings: [],
-      loading: true,
+export const useBookingStore = create<BookingState>()((set) => ({
+  bookings: [],
+  loading: true,
 
-      loadBookings: async () => {
-        const bookings = await bookingService.list();
-        set({ bookings, loading: false });
-      },
+  loadBookings: async () => {
+    const bookings = await bookingService.list();
+    set({ bookings, loading: false });
+  },
 
-      loadToday: async () => {
-        const bookings = await bookingService.getToday();
-        set({ bookings, loading: false });
-      },
+  loadToday: async () => {
+    const bookings = await bookingService.getToday();
+    set({ bookings, loading: false });
+  },
 
-      addBooking: async (data) => {
-        const booking = await bookingService.create(data);
-        const bookings = await bookingService.list();
-        set({ bookings });
-        return booking;
-      },
+  addBooking: async (data) => {
+    const booking = await bookingService.create(data);
+    // Re-read full list so store is consistent
+    const bookings = await bookingService.list();
+    set({ bookings });
+    return booking;
+  },
 
-      updateBooking: async (id, data) => {
-        await bookingService.update(id, data);
-        const bookings = await bookingService.list();
-        set({ bookings });
-      },
+  updateBooking: async (id, data) => {
+    await bookingService.update(id, data);
+    const bookings = await bookingService.list();
+    set({ bookings });
+  },
 
-      findByClientId: async (clientId) => {
-        return bookingService.findByClientId(clientId);
-      },
+  findByClientId: async (clientId) => {
+    return bookingService.findByClientId(clientId);
+  },
 
-      getByTherapistToday: async (therapistId) => {
-        return bookingService.getByTherapistToday(therapistId);
-      },
-    }),
-    {
-      name: 'spa_booking_store',
-      partialize: (state) => ({ bookings: state.bookings }),
-    },
-  ),
-);
+  getByTherapistToday: async (therapistId) => {
+    return bookingService.getByTherapistToday(therapistId);
+  },
+}));
