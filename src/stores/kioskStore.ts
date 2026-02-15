@@ -7,6 +7,7 @@ interface KioskState {
   intakeStep: number;
   bookingId?: string;
   clientId?: string;
+  gender: string;
   formData: Record<string, unknown>;
   language: string;
   isWalkin: boolean;
@@ -15,6 +16,7 @@ interface KioskState {
   setIntakeStep: (step: number) => void;
   setBookingId: (id: string) => void;
   setClientId: (id: string) => void;
+  setGender: (gender: string) => void;
   updateFormData: (data: Record<string, unknown>) => void;
   setLanguage: (lang: string) => void;
   setIsWalkin: (v: boolean) => void;
@@ -26,6 +28,7 @@ const initialState = {
   intakeStep: 0,
   bookingId: undefined,
   clientId: undefined,
+  gender: '',
   formData: {},
   language: 'en',
   isWalkin: false,
@@ -38,6 +41,7 @@ export const useKioskStore = create<KioskState>((set) => ({
   setIntakeStep: (intakeStep) => set({ intakeStep }),
   setBookingId: (bookingId) => set({ bookingId }),
   setClientId: (clientId) => set({ clientId }),
+  setGender: (gender) => set({ gender }),
   updateFormData: (data) => set((s) => ({ formData: { ...s.formData, ...data } })),
   setLanguage: (language) => set({ language }),
   setIsWalkin: (isWalkin) => set({ isWalkin }),

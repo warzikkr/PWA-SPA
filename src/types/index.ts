@@ -89,6 +89,7 @@ export interface Client {
   marketingSource: string;
   consentPromotions: boolean;
   consentPrivacy: boolean;
+  gender?: string;
   tags: string[];
   createdAt: string;
   notes?: string;

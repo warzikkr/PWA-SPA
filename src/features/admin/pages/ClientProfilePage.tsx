@@ -8,9 +8,10 @@ import { useConfigStore } from '../../../stores/configStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { useTherapistNoteStore } from '../../../stores/therapistNoteStore';
 import { useChangeRequestStore } from '../../../stores/changeRequestStore';
-import { getTherapistBrief, hasMedicalRisks } from '../../../stores/selectors/therapistBrief';
+import { hasMedicalRisks, getTherapistBrief } from '../../../stores/selectors/therapistBrief';
 import { Button, Input, Badge, Select, Modal } from '../../../shared/components';
 import { UnifiedBodyMap } from '../../../components/bodymap/UnifiedBodyMap';
+import { IntakeSummaryCard } from '../../../components/intake/IntakeSummaryCard';
 import { uid } from '../../../services/storage';
 import type { Client, Booking, Intake, TherapistNote } from '../../../types';
 
@@ -324,8 +325,7 @@ export function ClientProfilePage() {
             <p className="text-brand-muted text-center py-8">{t('common.noData')}</p>
           )}
           {sessions.map(({ booking, intake, notes }) => {
-            const brief = intake ? getTherapistBrief(intake) : null;
-            const risks = brief ? hasMedicalRisks(brief) : false;
+            const risks = intake ? hasMedicalRisks(getTherapistBrief(intake)) : false;
 
             return (
               <div
@@ -350,47 +350,7 @@ export function ClientProfilePage() {
                   </div>
                 </div>
 
-                {brief && (
-                  <>
-                    {/* Key metrics */}
-                    <div className="grid grid-cols-4 gap-3 mb-3">
-                      <div className="text-center">
-                        <div className="text-xs text-brand-muted uppercase">Duration</div>
-                        <div className="font-bold text-brand-dark">{brief.duration || '—'} min</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-brand-muted uppercase">Pressure</div>
-                        <div className="font-bold text-brand-dark capitalize">{brief.pressure || '—'}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-brand-muted uppercase">Goal</div>
-                        <div className="text-sm font-medium text-brand-dark">{brief.goal.join(', ') || '—'}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-brand-muted uppercase">Oil</div>
-                        <div className="text-sm font-medium text-brand-dark">{brief.oilPreference || '—'}</div>
-                      </div>
-                    </div>
-
-                    {/* Body map */}
-                    {(brief.focusZones.length > 0 || brief.avoidZones.length > 0) && (
-                      <div className="mb-3">
-                        <UnifiedBodyMap mode="readonly" focusZones={brief.focusZones} avoidZones={brief.avoidZones} compact />
-                      </div>
-                    )}
-
-                    {/* Medical flags */}
-                    {risks && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {brief.pregnancy !== 'no' && brief.pregnancy !== '' && <Badge variant="danger">Pregnant ({brief.pregnancy})</Badge>}
-                        {brief.bloodPressure && <Badge variant="danger">High BP</Badge>}
-                        {brief.fever && <Badge variant="danger">Fever</Badge>}
-                        {brief.varicoseVeins && <Badge variant="danger">Varicose Veins</Badge>}
-                        {brief.allergies.map((a) => <Badge key={a} variant="danger">{a}</Badge>)}
-                      </div>
-                    )}
-                  </>
-                )}
+                {intake && <IntakeSummaryCard intake={intake} />}
 
                 {/* Therapist notes for this session */}
                 {notes.length > 0 && (

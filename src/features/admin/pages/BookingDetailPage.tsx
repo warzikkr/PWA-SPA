@@ -6,10 +6,10 @@ import { useConfigStore } from '../../../stores/configStore';
 import { useIntakeStore } from '../../../stores/intakeStore';
 import { clientService } from '../../../services/clientService';
 import { Button, Badge, Select } from '../../../shared/components';
-import { UnifiedBodyMap } from '../../../components/bodymap/UnifiedBodyMap';
 import { Modal } from '../../../shared/components/Modal';
 import { getTherapistBrief } from '../../../stores/selectors/therapistBrief';
 import { PrintSessionSheet } from '../../../components/PrintSessionSheet';
+import { IntakeSummaryCard } from '../../../components/intake/IntakeSummaryCard';
 import type { Client, Booking, Intake } from '../../../types';
 
 export function BookingDetailPage() {
@@ -148,46 +148,15 @@ export function BookingDetailPage() {
           </div>
         </div>
 
-        {/* Right: Intake data + Body Map */}
+        {/* Right: Intake summary */}
         <div className="flex flex-col gap-4">
-          {/* Body Map — visual zone display */}
-          {intake && (() => {
-            const brief = getTherapistBrief(intake);
-            return (brief.focusZones.length > 0 || brief.avoidZones.length > 0) ? (
-              <div className="bg-white rounded-xl border border-brand-border p-4">
-                <h3 className="font-semibold text-brand-dark mb-3">{t('therapist.bodyZones')}</h3>
-                <UnifiedBodyMap
-                  mode="readonly"
-                  focusZones={brief.focusZones}
-                  avoidZones={brief.avoidZones}
-                  compact
-                />
-              </div>
-            ) : null;
-          })()}
-
-          {/* Intake data key-value list */}
-          <div className="bg-white rounded-xl border border-brand-border p-4">
-            <h3 className="font-semibold text-brand-dark mb-3">{t('admin.intakeData')}</h3>
-            {intake ? (
-              <div className="space-y-2 text-sm">
-                {Object.entries(intake.data).map(([key, value]) => (
-                  <div key={key} className="flex justify-between gap-4 py-1 border-b border-gray-100 last:border-0">
-                    <span className="text-brand-muted capitalize">{key.replace(/_/g, ' ')}</span>
-                    <span className="text-brand-dark font-medium text-right">
-                      {Array.isArray(value)
-                        ? typeof value[0] === 'object'
-                          ? JSON.stringify(value)
-                          : value.join(', ')
-                        : String(value)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
+          {intake ? (
+            <IntakeSummaryCard intake={intake} />
+          ) : (
+            <div className="bg-white rounded-xl border border-brand-border p-4">
               <p className="text-brand-muted text-sm">{t('common.noData')}</p>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

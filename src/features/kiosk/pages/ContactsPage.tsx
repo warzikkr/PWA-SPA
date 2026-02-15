@@ -6,17 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useKioskStore } from '../../../stores/kioskStore';
 import { useConfigStore } from '../../../stores/configStore';
 import { useClientStore } from '../../../stores/clientStore';
-import { Input, Select, Checkbox } from '../../../shared/components';
+import { Input, CardSelector } from '../../../shared/components';
 import { useKioskInactivity } from '../hooks/useKioskInactivity';
 
 const schema = z.object({
   fullName: z.string().min(1, 'Name is required'),
+  gender: z.enum(['male', 'female'], { required_error: 'Please select gender' }),
   contactMethod: z.string().min(1, 'Select a contact method'),
   contactValue: z.string().min(1, 'Contact value is required'),
-  email: z.string().email('Valid email required'),
-  marketingSource: z.string().min(1, 'Please select'),
-  consentPromotions: z.boolean(),
-  consentPrivacy: z.literal(true, { message: 'You must agree to the privacy policy' }),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -25,7 +22,7 @@ export function ContactsPage() {
   useKioskInactivity();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { setClientId, updateFormData } = useKioskStore();
+  const { setClientId, setGender, updateFormData } = useKioskStore();
   const config = useConfigStore((s) => s.config);
   const findOrCreate = useClientStore((s) => s.findOrCreate);
 
@@ -38,29 +35,27 @@ export function ContactsPage() {
     resolver: zodResolver(schema),
     defaultValues: {
       fullName: '',
+      gender: undefined,
       contactMethod: '',
       contactValue: '',
-      email: '',
-      marketingSource: '',
-      consentPromotions: false,
-      consentPrivacy: false as unknown as true,
     },
   });
 
   const onSubmit = async (data: FormData) => {
-    // Find existing client by email or create new
     const client = await findOrCreate({
       fullName: data.fullName,
-      email: data.email,
+      email: '',
       contactMethod: data.contactMethod,
       contactValue: data.contactValue,
-      marketingSource: data.marketingSource,
-      consentPromotions: data.consentPromotions,
+      marketingSource: '',
+      consentPromotions: false,
       consentPrivacy: true,
+      gender: data.gender,
       tags: [],
     });
 
     setClientId(client.id);
+    setGender(data.gender);
 
     // Pre-fill form with returning client's preferences
     if (client.preferences) {
@@ -76,17 +71,21 @@ export function ContactsPage() {
         if (prefs.atmosphere.music) prefData.music_preset = prefs.atmosphere.music;
         if (prefs.atmosphere.volume) prefData.volume = prefs.atmosphere.volume;
         if (prefs.atmosphere.light) prefData.light_preference = prefs.atmosphere.light;
-        if (prefs.atmosphere.temp) prefData.temperature = prefs.atmosphere.temp;
       }
       updateFormData(prefData);
     }
+
+    // Also store gender in intake formData for historical record
+    updateFormData({ gender: data.gender });
 
     navigate('/kiosk/intake');
   };
 
   return (
     <div className="flex flex-col min-h-full px-6 py-8">
-      <button onClick={() => navigate(-1)} className="text-brand-muted mb-6 self-start">&larr; {t('common.back')}</button>
+      <button onClick={() => navigate(-1)} className="text-brand-muted mb-6 self-start">
+        &larr; {t('common.back')}
+      </button>
 
       <h2 className="font-serif text-2xl font-bold text-brand-dark text-center mb-2">
         {t('kiosk.yourDetails')}
@@ -95,7 +94,10 @@ export function ContactsPage() {
         {t('kiosk.yourDetailsSubtitle')}
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="max-w-sm mx-auto w-full flex flex-col gap-5 pb-28">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="max-w-sm mx-auto w-full flex flex-col gap-5 pb-28"
+      >
         <Input
           label={t('kiosk.fullName')}
           placeholder={t('kiosk.fullNamePlaceholder')}
@@ -104,15 +106,33 @@ export function ContactsPage() {
         />
 
         <Controller
+          name="gender"
+          control={control}
+          render={({ field }) => (
+            <CardSelector
+              label={t('kiosk.gender', 'Gender')}
+              options={[
+                { id: 'male', label: t('kiosk.male', 'Male') },
+                { id: 'female', label: t('kiosk.female', 'Female') },
+              ]}
+              value={field.value ?? ''}
+              onChange={(v) => field.onChange(v)}
+              error={errors.gender?.message}
+            />
+          )}
+        />
+
+        <Controller
           name="contactMethod"
           control={control}
           render={({ field }) => (
-            <Select
+            <CardSelector
               label={t('kiosk.contactMethod')}
-              options={config.contactMethods.filter((c) => c.enabled).map((c) => ({ value: c.id, label: c.label }))}
-              placeholder={t('common.selectPlaceholder')}
+              options={config.contactMethods
+                .filter((c) => c.enabled)
+                .map((c) => ({ id: c.id, label: c.label }))}
               value={field.value}
-              onChange={field.onChange}
+              onChange={(v) => field.onChange(v)}
               error={errors.contactMethod?.message}
             />
           )}
@@ -124,41 +144,6 @@ export function ContactsPage() {
           {...register('contactValue')}
           error={errors.contactValue?.message}
         />
-
-        <Input
-          label={t('kiosk.email')}
-          type="email"
-          placeholder={t('kiosk.emailPlaceholder')}
-          {...register('email')}
-          error={errors.email?.message}
-        />
-
-        <Controller
-          name="marketingSource"
-          control={control}
-          render={({ field }) => (
-            <Select
-              label={t('kiosk.howDidYouHear')}
-              options={config.marketingSources.filter((s) => s.enabled).map((s) => ({ value: s.id, label: s.label }))}
-              placeholder={t('common.selectPlaceholder')}
-              value={field.value}
-              onChange={field.onChange}
-              error={errors.marketingSource?.message}
-            />
-          )}
-        />
-
-        <div className="border-t border-brand-border pt-4 mt-2 flex flex-col gap-2">
-          <Checkbox
-            label={t('kiosk.consentPromotions')}
-            {...register('consentPromotions')}
-          />
-          <Checkbox
-            label={t('kiosk.consentPrivacy')}
-            {...register('consentPrivacy')}
-            error={errors.consentPrivacy?.message}
-          />
-        </div>
 
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-brand-border">
           <div className="max-w-sm mx-auto">
