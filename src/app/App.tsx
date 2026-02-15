@@ -27,28 +27,30 @@ export function App() {
 
   // Restore Supabase session on mount
   useEffect(() => {
-    restoreSession();
+    restoreSession().catch(console.error);
   }, [restoreSession]);
 
-  // Load all data from Supabase + subscribe to Realtime when user is authenticated
-  // Also load config for kiosk (works for anon via RLS)
+  // Load config (needed by kiosk even without auth)
   useEffect(() => {
-    loadConfig();
+    loadConfig().catch(console.error);
+  }, [loadConfig]);
 
-    if (currentUser) {
-      loadClients();
-      loadBookings();
-      loadIntakes();
-      loadUsers();
-      loadNotes();
-      loadRequests();
-      subscribeRealtime();
-    }
+  // Load all data + realtime when authenticated
+  useEffect(() => {
+    if (!currentUser) return;
 
-    return () => {
-      unsubscribeRealtime();
-    };
-  }, [currentUser, loadConfig, loadClients, loadBookings, loadIntakes, loadUsers, loadNotes, loadRequests]);
+    Promise.all([
+      loadClients(),
+      loadBookings(),
+      loadIntakes(),
+      loadUsers(),
+      loadNotes(),
+      loadRequests(),
+    ]).catch(console.error);
+
+    subscribeRealtime();
+    return () => { unsubscribeRealtime(); };
+  }, [currentUser, loadClients, loadBookings, loadIntakes, loadUsers, loadNotes, loadRequests]);
 
   return <RouterProvider router={router} />;
 }

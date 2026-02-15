@@ -67,16 +67,20 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
 /** Listen for Supabase auth state changes (token refresh, sign out from another tab) */
 supabase.auth.onAuthStateChange(async (event) => {
-  if (event === 'SIGNED_OUT') {
-    useAuthStore.setState({ currentUser: null });
-  }
-  if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) {
-      const appUser = await userService.getByAuthUid(authUser.id);
-      if (appUser) {
-        useAuthStore.setState({ currentUser: appUser });
+  try {
+    if (event === 'SIGNED_OUT') {
+      useAuthStore.setState({ currentUser: null });
+    }
+    if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const appUser = await userService.getByAuthUid(authUser.id);
+        if (appUser) {
+          useAuthStore.setState({ currentUser: appUser });
+        }
       }
     }
+  } catch (err) {
+    console.error('onAuthStateChange error:', err);
   }
 });

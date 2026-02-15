@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../stores/authStore';
 import { Button, Input } from '../../../shared/components';
 import type { UserRole } from '../../../types';
@@ -12,16 +12,20 @@ const roleRedirects: Record<UserRole, string> = {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login, currentUser } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const loading = useAuthStore((s) => s.loading);
+  const login = useAuthStore((s) => s.login);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Already authenticated — redirect
+  // Still restoring session — show nothing briefly
+  if (loading) return null;
+
+  // Already authenticated — redirect via component (not navigate during render)
   if (currentUser) {
-    navigate(roleRedirects[currentUser.role], { replace: true });
-    return null;
+    return <Navigate to={roleRedirects[currentUser.role]} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
