@@ -11,7 +11,7 @@ import { useKioskInactivity } from '../hooks/useKioskInactivity';
 
 const schema = z.object({
   fullName: z.string().min(1, 'Name is required'),
-  gender: z.enum(['male', 'female'], { required_error: 'Please select gender' }),
+  gender: z.enum(['male', 'female'], { message: 'Please select gender' }),
   contactMethod: z.string().min(1, 'Select a contact method'),
   contactValue: z.string().min(1, 'Contact value is required'),
 });
