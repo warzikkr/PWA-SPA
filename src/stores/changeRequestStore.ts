@@ -1,5 +1,12 @@
+/**
+ * changeRequestStore — Zustand store for client change requests.
+ *
+ * SOURCE OF TRUTH: changeRequestService (localStorage via spa_change_requests).
+ * No Zustand persist — eliminates dual-persistence / stale-hydration bugs.
+ *
+ * Cross-tab sync: subscribeChangeRequestSync() reloads when another tab writes.
+ */
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { ClientChangeRequest, User } from '../types';
 import { changeRequestService } from '../services/changeRequestService';
 import { clientService } from '../services/clientService';
@@ -15,90 +22,95 @@ interface ChangeRequestState {
   rejectRequest: (id: string, reviewer: User) => Promise<void>;
 }
 
-export const useChangeRequestStore = create<ChangeRequestState>()(
-  persist(
-    (set, get) => ({
-      requests: [],
-      loading: true,
+export const useChangeRequestStore = create<ChangeRequestState>()((set, get) => ({
+  requests: [],
+  loading: true,
 
-      loadRequests: async () => {
-        const requests = await changeRequestService.list();
-        set({ requests, loading: false });
-      },
+  loadRequests: async () => {
+    const requests = await changeRequestService.list();
+    set({ requests, loading: false });
+  },
 
-      pendingCount: () =>
-        get().requests.filter((r) => r.status === 'pending').length,
+  pendingCount: () =>
+    get().requests.filter((r) => r.status === 'pending').length,
 
-      createRequest: async (data) => {
-        const request = await changeRequestService.create(data);
-        const requests = await changeRequestService.list();
-        set({ requests });
-        return request;
-      },
+  createRequest: async (data) => {
+    const request = await changeRequestService.create(data);
+    const requests = await changeRequestService.list();
+    set({ requests });
+    return request;
+  },
 
-      approveRequest: async (id, reviewer) => {
-        const req = get().requests.find((r) => r.id === id);
-        if (!req || req.status !== 'pending') return;
+  approveRequest: async (id, reviewer) => {
+    const req = get().requests.find((r) => r.id === id);
+    if (!req || req.status !== 'pending') return;
 
-        // Apply the change
-        if (req.type === 'delete') {
-          await clientService.delete(req.clientId);
-        } else if (req.type === 'critical_update') {
-          await clientService.update(req.clientId, req.payload);
-        }
+    // Apply the change
+    if (req.type === 'delete') {
+      await clientService.delete(req.clientId);
+    } else if (req.type === 'critical_update') {
+      await clientService.update(req.clientId, req.payload);
+    }
 
-        // Log audit on client (if not deleted)
-        if (req.type !== 'delete') {
-          await clientService.addAuditEntry(req.clientId, {
-            id: uid(),
-            action: `Change request approved: ${req.description}`,
-            performedBy: reviewer.fullName,
-            performedByUserId: reviewer.id,
-            role: reviewer.role,
-            timestamp: new Date().toISOString(),
-          });
-        }
+    // Log audit on client (if not deleted)
+    if (req.type !== 'delete') {
+      await clientService.addAuditEntry(req.clientId, {
+        id: uid(),
+        action: `Change request approved: ${req.description}`,
+        performedBy: reviewer.fullName,
+        performedByUserId: reviewer.id,
+        role: reviewer.role,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
-        // Update request status
-        await changeRequestService.update(id, {
-          status: 'approved',
-          reviewedByUserId: reviewer.id,
-          reviewedByName: reviewer.fullName,
-          reviewedAt: new Date().toISOString(),
-        });
+    // Update request status
+    await changeRequestService.update(id, {
+      status: 'approved',
+      reviewedByUserId: reviewer.id,
+      reviewedByName: reviewer.fullName,
+      reviewedAt: new Date().toISOString(),
+    });
 
-        const requests = await changeRequestService.list();
-        set({ requests });
-      },
+    const requests = await changeRequestService.list();
+    set({ requests });
+  },
 
-      rejectRequest: async (id, reviewer) => {
-        const req = get().requests.find((r) => r.id === id);
-        if (!req || req.status !== 'pending') return;
+  rejectRequest: async (id, reviewer) => {
+    const req = get().requests.find((r) => r.id === id);
+    if (!req || req.status !== 'pending') return;
 
-        // Log audit on client
-        await clientService.addAuditEntry(req.clientId, {
-          id: uid(),
-          action: `Change request rejected: ${req.description}`,
-          performedBy: reviewer.fullName,
-          performedByUserId: reviewer.id,
-          role: reviewer.role,
-          timestamp: new Date().toISOString(),
-        });
+    // Log audit on client
+    await clientService.addAuditEntry(req.clientId, {
+      id: uid(),
+      action: `Change request rejected: ${req.description}`,
+      performedBy: reviewer.fullName,
+      performedByUserId: reviewer.id,
+      role: reviewer.role,
+      timestamp: new Date().toISOString(),
+    });
 
-        await changeRequestService.update(id, {
-          status: 'rejected',
-          reviewedByUserId: reviewer.id,
-          reviewedByName: reviewer.fullName,
-          reviewedAt: new Date().toISOString(),
-        });
+    await changeRequestService.update(id, {
+      status: 'rejected',
+      reviewedByUserId: reviewer.id,
+      reviewedByName: reviewer.fullName,
+      reviewedAt: new Date().toISOString(),
+    });
 
-        const requests = await changeRequestService.list();
-        set({ requests });
-      },
-    }),
-    {
-      name: 'spa_change_request_store',
-      partialize: (state) => ({ requests: state.requests }),
-    },
-  ),
-);
+    const requests = await changeRequestService.list();
+    set({ requests });
+  },
+}));
+
+const CR_STORAGE_KEY = 'spa_change_requests';
+
+/** Cross-tab sync for change requests. Returns cleanup function. */
+export function subscribeChangeRequestSync(): () => void {
+  const handler = (e: StorageEvent) => {
+    if (e.key === CR_STORAGE_KEY) {
+      useChangeRequestStore.getState().loadRequests();
+    }
+  };
+  window.addEventListener('storage', handler);
+  return () => window.removeEventListener('storage', handler);
+}
