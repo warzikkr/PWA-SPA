@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { ReadonlyBodyMap } from '../shared/components';
+import { UnifiedBodyMap } from './bodymap/UnifiedBodyMap';
 import type { TherapistBrief } from '../stores/selectors/therapistBrief';
 import type { Booking } from '../types';
 import type { AppConfig } from '../types/config';
@@ -86,7 +86,8 @@ export function PrintSessionSheet({ brief, booking, client, config }: Props) {
         <div className="mb-4 border border-gray-300 rounded p-3">
           <h3 className="font-semibold text-sm mb-2">{t('therapist.bodyZones')}</h3>
           <div className="max-w-[240px] mx-auto">
-            <ReadonlyBodyMap
+            <UnifiedBodyMap
+              mode="readonly"
               focusZones={brief.focusZones}
               avoidZones={brief.avoidZones}
               compact

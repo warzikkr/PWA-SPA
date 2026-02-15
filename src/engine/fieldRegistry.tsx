@@ -11,7 +11,7 @@ import {
   Slider,
   SignaturePad,
 } from '../shared/components';
-import { BodyMap } from '../shared/components/BodyMap';
+import { UnifiedBodyMap } from '../components/bodymap/UnifiedBodyMap';
 
 interface FieldProps {
   field: FieldDefinition;
@@ -178,24 +178,28 @@ export function DynamicField({ field, control, error }: FieldProps) {
         />
       );
 
-    case 'bodymap':
+    case 'bodymap': {
+      const editType = bodyMapMode(field.id);
       return (
         <Controller
           name={field.id}
           control={control}
           defaultValue={[]}
           render={({ field: f }) => (
-            <BodyMap
-              label={field.label}
-              selected={f.value as BodyZoneSelection[]}
+            <UnifiedBodyMap
+              mode="edit"
+              editableType={editType}
+              focusZones={editType === 'focus' ? (f.value as BodyZoneSelection[]) : []}
+              avoidZones={editType === 'avoid' ? (f.value as BodyZoneSelection[]) : []}
               onChange={(v) => f.onChange(v)}
               maxSelections={field.validation?.max}
-              mode={bodyMapMode(field.id)}
+              label={field.label}
               error={error}
             />
           )}
         />
       );
+    }
 
     case 'signature':
       return (

@@ -5,7 +5,8 @@ import { useBookingStore } from '../../../stores/bookingStore';
 import { useConfigStore } from '../../../stores/configStore';
 import { useIntakeStore } from '../../../stores/intakeStore';
 import { clientService } from '../../../services/clientService';
-import { Button, Badge, Select, ReadonlyBodyMap } from '../../../shared/components';
+import { Button, Badge, Select } from '../../../shared/components';
+import { UnifiedBodyMap } from '../../../components/bodymap/UnifiedBodyMap';
 import { Modal } from '../../../shared/components/Modal';
 import { getTherapistBrief } from '../../../stores/selectors/therapistBrief';
 import { PrintSessionSheet } from '../../../components/PrintSessionSheet';
@@ -155,7 +156,8 @@ export function BookingDetailPage() {
             return (brief.focusZones.length > 0 || brief.avoidZones.length > 0) ? (
               <div className="bg-white rounded-xl border border-brand-border p-4">
                 <h3 className="font-semibold text-brand-dark mb-3">{t('therapist.bodyZones')}</h3>
-                <ReadonlyBodyMap
+                <UnifiedBodyMap
+                  mode="readonly"
                   focusZones={brief.focusZones}
                   avoidZones={brief.avoidZones}
                   compact

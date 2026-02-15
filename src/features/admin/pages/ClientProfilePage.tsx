@@ -9,7 +9,8 @@ import { useAuthStore } from '../../../stores/authStore';
 import { useTherapistNoteStore } from '../../../stores/therapistNoteStore';
 import { useChangeRequestStore } from '../../../stores/changeRequestStore';
 import { getTherapistBrief, hasMedicalRisks } from '../../../stores/selectors/therapistBrief';
-import { Button, Input, Badge, Select, ReadonlyBodyMap, Modal } from '../../../shared/components';
+import { Button, Input, Badge, Select, Modal } from '../../../shared/components';
+import { UnifiedBodyMap } from '../../../components/bodymap/UnifiedBodyMap';
 import { uid } from '../../../services/storage';
 import type { Client, Booking, Intake, TherapistNote } from '../../../types';
 
@@ -304,7 +305,8 @@ export function ClientProfilePage() {
             (client.preferences.focusZones?.length || client.preferences.avoidZones?.length) ? (
               <div className="bg-white rounded-xl border border-brand-border p-4 lg:col-span-2">
                 <h3 className="font-semibold text-brand-dark mb-3">Body Zones</h3>
-                <ReadonlyBodyMap
+                <UnifiedBodyMap
+                  mode="readonly"
                   focusZones={client.preferences.focusZones ?? []}
                   avoidZones={client.preferences.avoidZones ?? []}
                   compact
@@ -373,7 +375,7 @@ export function ClientProfilePage() {
                     {/* Body map */}
                     {(brief.focusZones.length > 0 || brief.avoidZones.length > 0) && (
                       <div className="mb-3">
-                        <ReadonlyBodyMap focusZones={brief.focusZones} avoidZones={brief.avoidZones} compact />
+                        <UnifiedBodyMap mode="readonly" focusZones={brief.focusZones} avoidZones={brief.avoidZones} compact />
                       </div>
                     )}
 

@@ -6,7 +6,8 @@ import { useConfigStore } from '../../../stores/configStore';
 import { clientService } from '../../../services/clientService';
 import { intakeService } from '../../../services/intakeService';
 import { getTherapistClientView, type TherapistClientView } from '../../../stores/selectors/therapistSessionView';
-import { Button, Badge, ReadonlyBodyMap } from '../../../shared/components';
+import { Button, Badge } from '../../../shared/components';
+import { UnifiedBodyMap } from '../../../components/bodymap/UnifiedBodyMap';
 import { getTherapistBrief, hasMedicalRisks } from '../../../stores/selectors/therapistBrief';
 import { PrintSessionSheet } from '../../../components/PrintSessionSheet';
 import type { Intake } from '../../../types';
@@ -121,7 +122,7 @@ export function SessionDetailPage() {
           <div className="bg-white rounded-xl border border-brand-border p-4 space-y-3">
             <h3 className="font-semibold text-brand-dark text-sm">{t('therapist.bodyZones')}</h3>
             {(brief.focusZones.length > 0 || brief.avoidZones.length > 0) && (
-              <ReadonlyBodyMap focusZones={brief.focusZones} avoidZones={brief.avoidZones} compact />
+              <UnifiedBodyMap mode="readonly" focusZones={brief.focusZones} avoidZones={brief.avoidZones} compact />
             )}
             {renderZoneGroup(brief.focusZones, t('therapist.focus'), 'text-brand-green')}
             {renderZoneGroup(brief.secondaryZones, t('therapist.secondary'), 'text-brand-muted')}
