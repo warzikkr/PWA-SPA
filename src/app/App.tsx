@@ -14,7 +14,7 @@ import { subscribeRealtime, unsubscribeRealtime } from '../lib/realtimeSync';
 import '../i18n';
 
 export function App() {
-  const restoreSession = useAuthStore((s) => s.restoreSession);
+  const loading = useAuthStore((s) => s.loading);
   const currentUser = useAuthStore((s) => s.currentUser);
 
   const loadConfig = useConfigStore((s) => s.loadConfig);
@@ -25,15 +25,12 @@ export function App() {
   const loadNotes = useTherapistNoteStore((s) => s.loadNotes);
   const loadRequests = useChangeRequestStore((s) => s.loadRequests);
 
-  // Restore Supabase session on mount
+  // Load config after auth init completes (avoids navigator lock race → AbortError)
   useEffect(() => {
-    restoreSession().catch(console.error);
-  }, [restoreSession]);
-
-  // Load config (needed by kiosk even without auth)
-  useEffect(() => {
-    loadConfig().catch(console.error);
-  }, [loadConfig]);
+    if (!loading) {
+      loadConfig().catch(console.error);
+    }
+  }, [loading, loadConfig]);
 
   // Load all data + realtime when authenticated
   useEffect(() => {

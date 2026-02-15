@@ -6,11 +6,8 @@ import { userService } from '../services/userService';
 interface AuthState {
   currentUser: User | null;
   loading: boolean;
-  /** Sign in via Supabase Auth, then fetch app user profile */
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  /** Restore session on app load */
-  restoreSession: () => Promise<void>;
   isAuthenticated: () => boolean;
   hasRole: (...roles: UserRole[]) => boolean;
 }
@@ -20,10 +17,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   loading: true,
 
   login: async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { success: false, error: error.message };
 
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const authUser = data.user;
     if (!authUser) return { success: false, error: 'No auth user after login' };
 
     const appUser = await userService.getByAuthUid(authUser.id);
@@ -42,20 +39,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     set({ currentUser: null });
   },
 
-  restoreSession: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      set({ currentUser: null, loading: false });
-      return;
-    }
-    try {
-      const appUser = await userService.getByAuthUid(session.user.id);
-      set({ currentUser: appUser ?? null, loading: false });
-    } catch {
-      set({ currentUser: null, loading: false });
-    }
-  },
-
   isAuthenticated: () => get().currentUser !== null,
 
   hasRole: (...roles) => {
@@ -65,16 +48,30 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 }));
 
-/** Listen for Supabase auth state changes (token refresh, sign out from another tab) */
-supabase.auth.onAuthStateChange(async (event) => {
+/**
+ * Single auth listener — replaces both restoreSession() and the old
+ * onAuthStateChange handler.  Using INITIAL_SESSION avoids the double
+ * getSession() + navigator-lock race that caused AbortError.
+ */
+supabase.auth.onAuthStateChange(async (event, session) => {
   try {
+    if (event === 'INITIAL_SESSION') {
+      if (!session?.user) {
+        useAuthStore.setState({ currentUser: null, loading: false });
+        return;
+      }
+      const appUser = await userService.getByAuthUid(session.user.id);
+      useAuthStore.setState({ currentUser: appUser ?? null, loading: false });
+      return;
+    }
+
     if (event === 'SIGNED_OUT') {
       useAuthStore.setState({ currentUser: null });
     }
+
     if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
-        const appUser = await userService.getByAuthUid(authUser.id);
+      if (session?.user) {
+        const appUser = await userService.getByAuthUid(session.user.id);
         if (appUser) {
           useAuthStore.setState({ currentUser: appUser });
         }
@@ -82,5 +79,9 @@ supabase.auth.onAuthStateChange(async (event) => {
     }
   } catch (err) {
     console.error('onAuthStateChange error:', err);
+    // Ensure loading is cleared even on error
+    if (event === 'INITIAL_SESSION') {
+      useAuthStore.setState({ currentUser: null, loading: false });
+    }
   }
 });
