@@ -1,10 +1,6 @@
 /**
- * configStore — Zustand store for app configuration.
- *
- * SOURCE OF TRUTH: configService (localStorage via spa_config).
- * No Zustand persist — eliminates dual-persistence / stale-hydration bugs.
- *
- * Cross-tab sync: subscribeConfigSync() reloads when another tab writes.
+ * configStore — Zustand in-memory cache for app configuration.
+ * Source of truth: Supabase (via configService).
  */
 import { create } from 'zustand';
 import type { AppConfig, ConfigOption, StepDefinition, FieldDefinition } from '../types/config';
@@ -49,7 +45,6 @@ export const useConfigStore = create<ConfigState>()((set, get) => ({
     set({ config: updated });
   },
 
-  /** Immutably update a single field within a step */
   updateField: async (stepId, fieldId, field) => {
     const schema = get().config.intakeSchema.map((step) => {
       if (step.id !== stepId) return step;
@@ -68,16 +63,3 @@ export const useConfigStore = create<ConfigState>()((set, get) => ({
     set({ config });
   },
 }));
-
-const CONFIG_STORAGE_KEY = 'spa_config';
-
-/** Cross-tab sync for config. Returns cleanup function. */
-export function subscribeConfigSync(): () => void {
-  const handler = (e: StorageEvent) => {
-    if (e.key === CONFIG_STORAGE_KEY) {
-      useConfigStore.getState().loadConfig();
-    }
-  };
-  window.addEventListener('storage', handler);
-  return () => window.removeEventListener('storage', handler);
-}

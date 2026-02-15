@@ -5,8 +5,7 @@
  * All steps run sequentially with error handling. If any step fails, throws
  * so the caller can handle (show error / retry).
  *
- * Uses Zustand store methods to ensure both localStorage (service layer)
- * and in-memory store state stay in sync.
+ * Uses Zustand store methods which delegate to Supabase service layer.
  */
 import type { ClientPreferences } from '../types';
 import { useBookingStore } from '../stores/bookingStore';

@@ -1,21 +1,11 @@
 /**
- * bookingStore — Zustand store for bookings.
- *
- * SOURCE OF TRUTH: bookingService (localStorage via spa_bookings).
- * No Zustand persist — eliminates dual-persistence / stale-hydration bugs.
- *
- * All consumers call loadBookings() to get the full list and filter in render.
- * loadToday / getByTherapistToday removed — they caused partial overwrites
- * and broke cross-role synchronization.
- *
- * Cross-tab sync: subscribeBookingSync() listens for localStorage changes
- * from other tabs (kiosk, reception, etc.) and reloads automatically.
+ * bookingStore — Zustand in-memory cache for bookings.
+ * Source of truth: Supabase (via bookingService).
+ * Realtime sync handled by realtimeSync.ts.
  */
 import { create } from 'zustand';
 import type { Booking } from '../types';
 import { bookingService } from '../services/bookingService';
-
-const STORAGE_KEY = 'spa_bookings';
 
 interface BookingState {
   bookings: Booking[];
@@ -52,18 +42,3 @@ export const useBookingStore = create<BookingState>()((set) => ({
     return bookingService.findByClientId(clientId);
   },
 }));
-
-/**
- * Cross-tab sync: when another tab writes to spa_bookings in localStorage,
- * reload the in-memory store so all roles see updates immediately.
- * Returns cleanup function.
- */
-export function subscribeBookingSync(): () => void {
-  const handler = (e: StorageEvent) => {
-    if (e.key === STORAGE_KEY) {
-      useBookingStore.getState().loadBookings();
-    }
-  };
-  window.addEventListener('storage', handler);
-  return () => window.removeEventListener('storage', handler);
-}

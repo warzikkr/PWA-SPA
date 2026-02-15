@@ -13,9 +13,10 @@ const roleRedirects: Record<UserRole, string> = {
 export function LoginPage() {
   const navigate = useNavigate();
   const { login, currentUser } = useAuthStore();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Already authenticated — redirect
   if (currentUser) {
@@ -23,15 +24,17 @@ export function LoginPage() {
     return null;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const success = login(username.trim(), password);
-    if (success) {
+    setSubmitting(true);
+    const result = await login(email.trim(), password);
+    setSubmitting(false);
+    if (result.success) {
       const user = useAuthStore.getState().currentUser!;
       navigate(roleRedirects[user.role], { replace: true });
     } else {
-      setError('Invalid username or password');
+      setError(result.error ?? 'Invalid credentials');
     }
   };
 
@@ -46,10 +49,11 @@ export function LoginPage() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input
-              label="Username"
-              placeholder="Enter username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              label="Email"
+              type="email"
+              placeholder="Enter email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               autoFocus
             />
             <Input
@@ -64,8 +68,8 @@ export function LoginPage() {
               <p className="text-sm text-red-600 text-center">{error}</p>
             )}
 
-            <Button fullWidth type="submit">
-              Sign In
+            <Button fullWidth type="submit" disabled={submitting}>
+              {submitting ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 

@@ -1,10 +1,7 @@
 /**
- * intakeStore — Zustand store for intakes.
- *
- * SOURCE OF TRUTH: intakeService (localStorage via spa_intakes).
- * No Zustand persist — eliminates dual-persistence / stale-hydration bugs.
- *
- * Cross-tab sync: subscribeIntakeSync() reloads when another tab writes.
+ * intakeStore — Zustand in-memory cache for intakes.
+ * Source of truth: Supabase (via intakeService).
+ * Realtime sync handled by realtimeSync.ts.
  */
 import { create } from 'zustand';
 import type { Intake } from '../types';
@@ -38,16 +35,3 @@ export const useIntakeStore = create<IntakeState>()((set) => ({
     return intakeService.getByBookingId(bookingId);
   },
 }));
-
-const INTAKE_STORAGE_KEY = 'spa_intakes';
-
-/** Cross-tab sync for intakes. Returns cleanup function. */
-export function subscribeIntakeSync(): () => void {
-  const handler = (e: StorageEvent) => {
-    if (e.key === INTAKE_STORAGE_KEY) {
-      useIntakeStore.getState().loadIntakes();
-    }
-  };
-  window.addEventListener('storage', handler);
-  return () => window.removeEventListener('storage', handler);
-}

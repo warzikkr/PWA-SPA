@@ -12,7 +12,6 @@ import { hasMedicalRisks, getTherapistBrief } from '../../../stores/selectors/th
 import { Button, Input, Badge, Select, Modal } from '../../../shared/components';
 import { UnifiedBodyMap } from '../../../components/bodymap/UnifiedBodyMap';
 import { IntakeSummaryCard } from '../../../components/intake/IntakeSummaryCard';
-import { uid } from '../../../services/storage';
 import type { Client, Booking, Intake, TherapistNote } from '../../../types';
 
 /* ── Tab type ── */
@@ -134,7 +133,7 @@ export function ClientProfilePage() {
       await updateClient(client.id, changes);
       for (const action of auditActions) {
         await addAuditEntry(client.id, {
-          id: uid(),
+          id: crypto.randomUUID(),
           action: `Minor edit: ${action}`,
           performedBy: currentUser.fullName,
           performedByUserId: currentUser.id,
@@ -151,7 +150,7 @@ export function ClientProfilePage() {
   const handleDelete = async () => {
     if (!currentUser) return;
     await addAuditEntry(client.id, {
-      id: uid(),
+      id: crypto.randomUUID(),
       action: 'Client deleted',
       performedBy: currentUser.fullName,
       performedByUserId: currentUser.id,
@@ -181,7 +180,7 @@ export function ClientProfilePage() {
     if (!currentUser) return;
     await deleteTherapistNote(noteId);
     await addAuditEntry(client.id, {
-      id: uid(),
+      id: crypto.randomUUID(),
       action: `Therapist note deleted (id: ${noteId})`,
       performedBy: currentUser.fullName,
       performedByUserId: currentUser.id,

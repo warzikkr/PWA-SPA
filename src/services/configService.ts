@@ -1,21 +1,39 @@
+import { supabase } from '../lib/supabaseClient';
 import type { AppConfig } from '../types/config';
 import { defaultConfig } from '../data/defaultConfig';
-import { getItem, setItem } from './storage';
 
-const KEY = 'config';
+/** Single-row config table. Uses a fixed ID for the singleton row. */
+const CONFIG_ROW_ID = '00000000-0000-0000-0000-000000000001';
 
-/** TODO: replace with real API calls */
 export const configService = {
   async getConfig(): Promise<AppConfig> {
-    return getItem<AppConfig>(KEY, defaultConfig);
+    const { data, error } = await supabase
+      .from('app_config')
+      .select('config')
+      .eq('id', CONFIG_ROW_ID)
+      .maybeSingle();
+    if (error) throw new Error(`configService.getConfig: ${error.message}`);
+    if (!data || !data.config || Object.keys(data.config).length === 0) {
+      return defaultConfig;
+    }
+    // Merge with defaultConfig to fill any missing keys
+    return { ...defaultConfig, ...(data.config as Partial<AppConfig>) };
   },
 
   async saveConfig(config: AppConfig): Promise<void> {
-    setItem(KEY, config);
+    const { error } = await supabase
+      .from('app_config')
+      .update({ config })
+      .eq('id', CONFIG_ROW_ID);
+    if (error) throw new Error(`configService.saveConfig: ${error.message}`);
   },
 
   async resetConfig(): Promise<AppConfig> {
-    setItem(KEY, defaultConfig);
+    const { error } = await supabase
+      .from('app_config')
+      .update({ config: {} })
+      .eq('id', CONFIG_ROW_ID);
+    if (error) throw new Error(`configService.resetConfig: ${error.message}`);
     return defaultConfig;
   },
 };

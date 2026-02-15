@@ -4,7 +4,9 @@ import { useUserStore } from '../../../stores/userStore';
 import { useConfigStore } from '../../../stores/configStore';
 import { Button, Input, Select, Toggle } from '../../../shared/components';
 import { Modal } from '../../../shared/components/Modal';
-import type { User, UserRole } from '../../../types';
+import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
+import type { UserRole } from '../../../types';
 
 const roles: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'Admin' },
@@ -14,22 +16,33 @@ const roles: { value: UserRole; label: string }[] = [
 
 const emptyForm = {
   fullName: '',
-  username: '',
+  email: '',
   password: '',
   role: 'reception' as UserRole,
   therapistId: '',
 };
 
+/**
+ * Create a throwaway Supabase client that does NOT persist sessions.
+ * Used so that signUp() doesn't clobber the admin's active session.
+ */
+function tempSupabaseClient() {
+  return createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY,
+    { auth: { persistSession: false } },
+  );
+}
+
 export function UserManagementPage() {
   const { t } = useTranslation();
-  const { users, loadUsers, createUser, updateUser, toggleEnabled } = useUserStore();
+  const { users, loadUsers, createUser, toggleEnabled } = useUserStore();
   const therapists = useConfigStore((s) => s.config.therapists);
 
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(emptyForm);
-  const [editUser, setEditUser] = useState<User | null>(null);
-  const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -37,32 +50,50 @@ export function UserManagementPage() {
 
   const handleCreate = async () => {
     setError('');
-    if (!form.fullName.trim() || !form.username.trim() || !form.password.trim()) {
+    if (!form.fullName.trim() || !form.email.trim() || !form.password.trim()) {
       setError('All fields are required');
       return;
     }
-    // Check duplicate username
-    if (users.some((u) => u.username === form.username.trim())) {
-      setError('Username already exists');
-      return;
+
+    setCreating(true);
+    try {
+      // 1. Create Supabase auth user via a non-persistent client
+      const tmp = tempSupabaseClient();
+      const { data: authData, error: authErr } = await tmp.auth.signUp({
+        email: form.email.trim(),
+        password: form.password.trim(),
+      });
+      if (authErr) throw new Error(authErr.message);
+      if (!authData.user) throw new Error('Auth user not created');
+
+      // 2. Insert app user row linked to auth uid
+      //    We use the main (admin-session) supabase client so RLS allows the insert
+      const username = form.email.trim().split('@')[0];
+      await createUser({
+        fullName: form.fullName.trim(),
+        username,
+        role: form.role,
+        therapistId: form.role === 'therapist' ? form.therapistId || undefined : undefined,
+        enabled: true,
+        authUid: authData.user.id,
+      } as never); // authUid is passed through to userService.create
+
+      setForm(emptyForm);
+      setShowCreate(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create user');
+    } finally {
+      setCreating(false);
     }
-    await createUser({
-      fullName: form.fullName.trim(),
-      username: form.username.trim(),
-      password: form.password.trim(),
-      role: form.role,
-      therapistId: form.role === 'therapist' ? form.therapistId || undefined : undefined,
-      enabled: true,
-    });
-    setForm(emptyForm);
-    setShowCreate(false);
   };
 
-  const handlePasswordUpdate = async () => {
-    if (!editUser || !newPassword.trim()) return;
-    await updateUser(editUser.id, { password: newPassword.trim() });
-    setEditUser(null);
-    setNewPassword('');
+  const handleResetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) {
+      alert(`Error: ${error.message}`);
+    } else {
+      alert('Password reset email sent');
+    }
   };
 
   const therapistLabel = (id?: string) =>
@@ -113,10 +144,10 @@ export function UserManagementPage() {
                   </td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => { setEditUser(u); setNewPassword(''); }}
+                      onClick={() => handleResetPassword(`${u.username}@spa.local`)}
                       className="text-xs text-brand-green hover:underline"
                     >
-                      Change Password
+                      Reset Password
                     </button>
                   </td>
                 </tr>
@@ -142,9 +173,11 @@ export function UserManagementPage() {
             onChange={(e) => setForm({ ...form, fullName: e.target.value })}
           />
           <Input
-            label="Username"
-            value={form.username}
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
+            label="Email"
+            type="email"
+            placeholder="user@spa.local"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
           <Input
             label="Password"
@@ -168,20 +201,9 @@ export function UserManagementPage() {
             />
           )}
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button fullWidth onClick={handleCreate}>Create</Button>
-        </div>
-      </Modal>
-
-      {/* Change Password modal */}
-      <Modal open={!!editUser} onClose={() => setEditUser(null)} title={`Change Password — ${editUser?.fullName}`}>
-        <div className="space-y-4">
-          <Input
-            label="New Password"
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-          <Button fullWidth onClick={handlePasswordUpdate}>Update Password</Button>
+          <Button fullWidth onClick={handleCreate} disabled={creating}>
+            {creating ? 'Creating...' : 'Create'}
+          </Button>
         </div>
       </Modal>
     </div>

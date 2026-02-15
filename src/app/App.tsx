@@ -1,34 +1,22 @@
 import { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
-import { useConfigStore, subscribeConfigSync } from '../stores/configStore';
-import { useClientStore, subscribeClientSync } from '../stores/clientStore';
-import { useBookingStore, subscribeBookingSync } from '../stores/bookingStore';
-import { useIntakeStore, subscribeIntakeSync } from '../stores/intakeStore';
-import { useUserStore, subscribeUserSync } from '../stores/userStore';
-import { useTherapistNoteStore, subscribeNoteSync } from '../stores/therapistNoteStore';
-import { useChangeRequestStore, subscribeChangeRequestSync } from '../stores/changeRequestStore';
+import { useAuthStore } from '../stores/authStore';
+import { useConfigStore } from '../stores/configStore';
+import { useClientStore } from '../stores/clientStore';
+import { useBookingStore } from '../stores/bookingStore';
+import { useIntakeStore } from '../stores/intakeStore';
+import { useUserStore } from '../stores/userStore';
+import { useTherapistNoteStore } from '../stores/therapistNoteStore';
+import { useChangeRequestStore } from '../stores/changeRequestStore';
+import { subscribeRealtime, unsubscribeRealtime } from '../lib/realtimeSync';
 // Initialize i18n (side-effect import)
 import '../i18n';
 
-/**
- * One-time cleanup of stale Zustand persist keys.
- * These stores no longer use persist — service-layer localStorage is the single source of truth.
- */
-const STALE_PERSIST_KEYS = [
-  'spa_therapist_note_store',
-  'spa_change_request_store',
-  'spa_user_store',
-  'spa_config_store',
-];
-
-function cleanupStalePersistKeys() {
-  for (const key of STALE_PERSIST_KEYS) {
-    localStorage.removeItem(key);
-  }
-}
-
 export function App() {
+  const restoreSession = useAuthStore((s) => s.restoreSession);
+  const currentUser = useAuthStore((s) => s.currentUser);
+
   const loadConfig = useConfigStore((s) => s.loadConfig);
   const loadClients = useClientStore((s) => s.loadClients);
   const loadBookings = useBookingStore((s) => s.loadBookings);
@@ -37,30 +25,30 @@ export function App() {
   const loadNotes = useTherapistNoteStore((s) => s.loadNotes);
   const loadRequests = useChangeRequestStore((s) => s.loadRequests);
 
+  // Restore Supabase session on mount
   useEffect(() => {
-    cleanupStalePersistKeys();
-    loadConfig();
-    loadClients();
-    loadBookings();
-    loadIntakes();
-    loadUsers();
-    loadNotes();
-    loadRequests();
-  }, [loadConfig, loadClients, loadBookings, loadIntakes, loadUsers, loadNotes, loadRequests]);
+    restoreSession();
+  }, [restoreSession]);
 
-  // Cross-tab sync: reload ALL stores when another tab writes to localStorage
+  // Load all data from Supabase + subscribe to Realtime when user is authenticated
+  // Also load config for kiosk (works for anon via RLS)
   useEffect(() => {
-    const unsubs = [
-      subscribeBookingSync(),
-      subscribeClientSync(),
-      subscribeIntakeSync(),
-      subscribeUserSync(),
-      subscribeNoteSync(),
-      subscribeChangeRequestSync(),
-      subscribeConfigSync(),
-    ];
-    return () => unsubs.forEach((fn) => fn());
-  }, []);
+    loadConfig();
+
+    if (currentUser) {
+      loadClients();
+      loadBookings();
+      loadIntakes();
+      loadUsers();
+      loadNotes();
+      loadRequests();
+      subscribeRealtime();
+    }
+
+    return () => {
+      unsubscribeRealtime();
+    };
+  }, [currentUser, loadConfig, loadClients, loadBookings, loadIntakes, loadUsers, loadNotes, loadRequests]);
 
   return <RouterProvider router={router} />;
 }

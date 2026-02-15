@@ -1,0 +1,17 @@
+-- ============================================================
+-- Seed users (run AFTER creating auth users in Supabase dashboard)
+--
+-- Create these auth users first via Supabase Dashboard > Authentication:
+--   admin@spa.local     / admin
+--   reception@spa.local / reception
+--   anna@spa.local      / anna
+--   maria@spa.local     / maria
+--
+-- Then replace the auth_uid values below with actual auth.users UUIDs.
+-- ============================================================
+
+-- INSERT INTO public.users (full_name, username, role, therapist_id, enabled, auth_uid) VALUES
+--   ('Admin',      'admin',     'admin',     NULL,  true, 'AUTH_UID_FOR_ADMIN'),
+--   ('Front Desk', 'reception', 'reception', NULL,  true, 'AUTH_UID_FOR_RECEPTION'),
+--   ('Anna K.',    'anna',      'therapist', 'th_1', true, 'AUTH_UID_FOR_ANNA'),
+--   ('Maria S.',   'maria',     'therapist', 'th_2', true, 'AUTH_UID_FOR_MARIA');

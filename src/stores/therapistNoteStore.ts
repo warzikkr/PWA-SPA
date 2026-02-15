@@ -1,10 +1,7 @@
 /**
- * therapistNoteStore — Zustand store for therapist notes.
- *
- * SOURCE OF TRUTH: therapistNoteService (localStorage via spa_therapist_notes).
- * No Zustand persist — eliminates dual-persistence / stale-hydration bugs.
- *
- * Cross-tab sync: subscribeNoteSync() reloads when another tab writes.
+ * therapistNoteStore — Zustand in-memory cache for therapist notes.
+ * Source of truth: Supabase (via therapistNoteService).
+ * Realtime sync handled by realtimeSync.ts.
  */
 import { create } from 'zustand';
 import type { TherapistNote } from '../types';
@@ -54,16 +51,3 @@ export const useTherapistNoteStore = create<TherapistNoteState>()((set, get) => 
     set({ notes });
   },
 }));
-
-const NOTE_STORAGE_KEY = 'spa_therapist_notes';
-
-/** Cross-tab sync for therapist notes. Returns cleanup function. */
-export function subscribeNoteSync(): () => void {
-  const handler = (e: StorageEvent) => {
-    if (e.key === NOTE_STORAGE_KEY) {
-      useTherapistNoteStore.getState().loadNotes();
-    }
-  };
-  window.addEventListener('storage', handler);
-  return () => window.removeEventListener('storage', handler);
-}

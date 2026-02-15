@@ -5,7 +5,6 @@ export interface User {
   id: string;
   fullName: string;
   username: string;
-  password: string; // plain text in mock — hashed in real backend
   role: UserRole;
   therapistId?: string; // links to ConfigOption therapist id
   enabled: boolean;

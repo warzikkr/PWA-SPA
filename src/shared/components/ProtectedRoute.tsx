@@ -8,11 +8,15 @@ interface Props {
 
 /**
  * Route guard — renders child routes only when the current user
- * is authenticated and has one of the allowed roles.
- * Otherwise redirects to /login.
+ * is authenticated via Supabase and has one of the allowed roles.
+ * Shows nothing while session is being restored. Redirects to /login otherwise.
  */
 export function ProtectedRoute({ allowedRoles }: Props) {
   const currentUser = useAuthStore((s) => s.currentUser);
+  const loading = useAuthStore((s) => s.loading);
+
+  // Still restoring Supabase session — render nothing (or a spinner)
+  if (loading) return null;
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;

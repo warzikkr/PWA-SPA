@@ -103,10 +103,10 @@ export const mockIntakes: Intake[] = [
 ];
 
 export const mockUsers: User[] = [
-  { id: 'usr_admin', fullName: 'Admin', username: 'admin', password: 'admin', role: 'admin', enabled: true },
-  { id: 'usr_rec', fullName: 'Front Desk', username: 'reception', password: 'reception', role: 'reception', enabled: true },
-  { id: 'usr_th1', fullName: 'Anna K.', username: 'anna', password: 'anna', role: 'therapist', therapistId: 'th_1', enabled: true },
-  { id: 'usr_th2', fullName: 'Maria S.', username: 'maria', password: 'maria', role: 'therapist', therapistId: 'th_2', enabled: true },
+  { id: 'usr_admin', fullName: 'Admin', username: 'admin', role: 'admin', enabled: true },
+  { id: 'usr_rec', fullName: 'Front Desk', username: 'reception', role: 'reception', enabled: true },
+  { id: 'usr_th1', fullName: 'Anna K.', username: 'anna', role: 'therapist', therapistId: 'th_1', enabled: true },
+  { id: 'usr_th2', fullName: 'Maria S.', username: 'maria', role: 'therapist', therapistId: 'th_2', enabled: true },
 ];
 
 export const mockTherapistNotes: TherapistNote[] = [

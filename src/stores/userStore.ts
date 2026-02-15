@@ -1,10 +1,7 @@
 /**
- * userStore — Zustand store for users.
- *
- * SOURCE OF TRUTH: userService (localStorage via spa_users).
- * No Zustand persist — eliminates dual-persistence / stale-hydration bugs.
- *
- * Cross-tab sync: subscribeUserSync() reloads when another tab writes.
+ * userStore — Zustand in-memory cache for users.
+ * Source of truth: Supabase (via userService).
+ * Realtime sync handled by realtimeSync.ts.
  */
 import { create } from 'zustand';
 import type { User } from '../types';
@@ -50,16 +47,3 @@ export const useUserStore = create<UserState>()((set, get) => ({
 
   getByUsername: (username) => get().users.find((u) => u.username === username),
 }));
-
-const USER_STORAGE_KEY = 'spa_users';
-
-/** Cross-tab sync for users. Returns cleanup function. */
-export function subscribeUserSync(): () => void {
-  const handler = (e: StorageEvent) => {
-    if (e.key === USER_STORAGE_KEY) {
-      useUserStore.getState().loadUsers();
-    }
-  };
-  window.addEventListener('storage', handler);
-  return () => window.removeEventListener('storage', handler);
-}

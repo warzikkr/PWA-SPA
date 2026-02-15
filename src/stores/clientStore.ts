@@ -1,10 +1,7 @@
 /**
- * clientStore — Zustand store for clients.
- *
- * SOURCE OF TRUTH: clientService (localStorage via spa_clients).
- * No Zustand persist — eliminates dual-persistence / stale-hydration bugs.
- *
- * Cross-tab sync: subscribeClientSync() reloads when another tab writes.
+ * clientStore — Zustand in-memory cache for clients.
+ * Source of truth: Supabase (via clientService).
+ * Realtime sync handled by realtimeSync.ts.
  */
 import { create } from 'zustand';
 import type { Client, ClientPreferences, ClientAuditLog } from '../types';
@@ -35,18 +32,15 @@ export const useClientStore = create<ClientState>()((set, get) => ({
   getById: (id) => get().clients.find((c) => c.id === id),
 
   findOrCreate: async (data) => {
-    // Match by contactValue (primary identifier since email was removed from kiosk)
     const query = data.contactValue?.trim();
     if (query) {
       const existing = await clientService.findByContact(query);
-      // Only match if contactMethod + contactValue both match exactly
       const exact = existing.find(
         (c) =>
           c.contactMethod === data.contactMethod &&
           c.contactValue.toLowerCase() === query.toLowerCase(),
       );
       if (exact) {
-        // Update name/gender if changed
         await clientService.update(exact.id, {
           fullName: data.fullName,
           gender: data.gender,
@@ -56,7 +50,6 @@ export const useClientStore = create<ClientState>()((set, get) => ({
         return { ...exact, fullName: data.fullName, gender: data.gender };
       }
     }
-    // Create new
     const client = await clientService.create(data);
     const clients = await clientService.list();
     set({ clients });
@@ -99,16 +92,3 @@ export const useClientStore = create<ClientState>()((set, get) => ({
     set({ clients });
   },
 }));
-
-const CLIENT_STORAGE_KEY = 'spa_clients';
-
-/** Cross-tab sync for clients. Returns cleanup function. */
-export function subscribeClientSync(): () => void {
-  const handler = (e: StorageEvent) => {
-    if (e.key === CLIENT_STORAGE_KEY) {
-      useClientStore.getState().loadClients();
-    }
-  };
-  window.addEventListener('storage', handler);
-  return () => window.removeEventListener('storage', handler);
-}
