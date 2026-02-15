@@ -1,14 +1,13 @@
 /**
- * HealthStep — Screen 4: Health & Sensitivity.
+ * HealthStep — Screen 4: Health, Allergies & Sensitivity.
  *
- * Top toggle: "Do you have health conditions?" (default OFF).
- * When expanded: medical fields + allergies + oil preference + smell.
- * Gender-conditional: pregnancy only if female.
+ * Single gate toggle: "Do you have any health conditions or allergies?"
+ * Default: OFF → no fields shown, all health/allergy data cleared on submit.
+ * ON → full expanded section with medical fields + allergies + oil + smell.
  *
- * Allergies, oil preference, and smell sensitivity are now part of this
- * step (merged from former AllergiesStep) to reduce total step count.
+ * Gender-conditional: pregnancy only if gender === 'female'.
  *
- * Data keys remain backward-compatible:
+ * Data keys (backward-compatible):
  *   has_health_conditions, injuries, pregnancy, varicose_veins,
  *   high_blood_pressure, fever, skin_issues, pain_scale, pain_location,
  *   allergies, oil_preference, smell_sensitivity
@@ -43,7 +42,6 @@ const OIL_OPTIONS = [
 
 const schema = z.object({
   has_health_conditions: z.boolean(),
-  // Medical
   injuries: z.string().optional(),
   pregnancy: z.string().optional(),
   varicose_veins: z.boolean().optional(),
@@ -52,7 +50,6 @@ const schema = z.object({
   skin_issues: z.string().optional(),
   pain_scale: z.number().optional(),
   pain_location: z.string().optional(),
-  // Allergies & Oil (always visible inside expanded section)
   allergies: z.array(z.string()).optional(),
   oil_preference: z.string().optional(),
   smell_sensitivity: z.boolean().optional(),
@@ -70,11 +67,7 @@ export function HealthStep({ defaultValues, onSubmit, onBack }: Props) {
   const { t } = useTranslation();
   const gender = useKioskStore((s) => s.gender);
 
-  const {
-    control,
-    handleSubmit,
-    watch,
-  } = useForm<FormData>({
+  const { control, handleSubmit, watch } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       has_health_conditions: (defaultValues.has_health_conditions as boolean) ?? false,
@@ -97,13 +90,20 @@ export function HealthStep({ defaultValues, onSubmit, onBack }: Props) {
 
   const handleFormSubmit = (data: FormData) => {
     if (!data.has_health_conditions) {
-      // Not expanded — submit defaults + allergies/oil (always collected)
+      // Explicitly clear all health + allergy fields so stale data doesn't persist
       onSubmit({
         has_health_conditions: false,
         pregnancy: 'no',
-        allergies: data.allergies ?? [],
-        oil_preference: data.oil_preference ?? '',
-        smell_sensitivity: data.smell_sensitivity ?? false,
+        injuries: '',
+        varicose_veins: false,
+        high_blood_pressure: false,
+        fever: false,
+        skin_issues: '',
+        pain_scale: 0,
+        pain_location: '',
+        allergies: [],
+        oil_preference: '',
+        smell_sensitivity: false,
       });
       return;
     }
@@ -134,7 +134,7 @@ export function HealthStep({ defaultValues, onSubmit, onBack }: Props) {
             <Toggle
               label={t(
                 'kiosk.hasHealthConditions',
-                'Do you have any health conditions we should know about?',
+                'Do you have any health conditions or allergies?',
               )}
               checked={field.value}
               onChange={field.onChange}
@@ -143,9 +143,11 @@ export function HealthStep({ defaultValues, onSubmit, onBack }: Props) {
         />
       </div>
 
-      {/* ── Expanded medical section ── */}
+      {/* ── Everything below only visible when expanded ── */}
       {expanded && (
-        <div className="space-y-5">
+        <div className="space-y-6">
+          {/* ─── Medical section ─── */}
+
           {/* Pregnancy — female only */}
           {showPregnancy && (
             <Controller
@@ -285,57 +287,57 @@ export function HealthStep({ defaultValues, onSubmit, onBack }: Props) {
               />
             )}
           />
+
+          {/* ─── Allergies & Preferences section ─── */}
+          <div className="border-t border-brand-border pt-6 space-y-5">
+            <h3 className="text-base font-semibold text-brand-dark">
+              {t('kiosk.allergiesAndOil', 'Allergies & Preferences')}
+            </h3>
+
+            {/* Allergies — multi-select tags */}
+            <Controller
+              name="allergies"
+              control={control}
+              render={({ field }) => (
+                <CardSelector
+                  label={t('kiosk.allergies', 'Allergies')}
+                  multiple
+                  options={ALLERGY_OPTIONS}
+                  value={(field.value as string[]) ?? []}
+                  onChange={(v) => field.onChange(v)}
+                />
+              )}
+            />
+
+            {/* Oil preference — tile buttons */}
+            <Controller
+              name="oil_preference"
+              control={control}
+              render={({ field }) => (
+                <CardSelector
+                  label={t('kiosk.oilPreference', 'Oil Preference')}
+                  options={OIL_OPTIONS}
+                  value={field.value ?? ''}
+                  onChange={(v) => field.onChange(v)}
+                />
+              )}
+            />
+
+            {/* Smell sensitivity */}
+            <Controller
+              name="smell_sensitivity"
+              control={control}
+              render={({ field }) => (
+                <Toggle
+                  label={t('kiosk.smellSensitivity', 'Strong Smell Sensitivity')}
+                  checked={field.value ?? false}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+          </div>
         </div>
       )}
-
-      {/* ── Allergies & Oil section (always visible) ── */}
-      <div className="border-t border-brand-border pt-6 space-y-6">
-        <h3 className="text-base font-semibold text-brand-dark">
-          {t('kiosk.allergiesAndOil', 'Allergies & Preferences')}
-        </h3>
-
-        {/* Allergies — multi-select tags */}
-        <Controller
-          name="allergies"
-          control={control}
-          render={({ field }) => (
-            <CardSelector
-              label={t('kiosk.allergies', 'Allergies')}
-              multiple
-              options={ALLERGY_OPTIONS}
-              value={(field.value as string[]) ?? []}
-              onChange={(v) => field.onChange(v)}
-            />
-          )}
-        />
-
-        {/* Oil preference — tile buttons */}
-        <Controller
-          name="oil_preference"
-          control={control}
-          render={({ field }) => (
-            <CardSelector
-              label={t('kiosk.oilPreference', 'Oil Preference')}
-              options={OIL_OPTIONS}
-              value={field.value ?? ''}
-              onChange={(v) => field.onChange(v)}
-            />
-          )}
-        />
-
-        {/* Smell sensitivity */}
-        <Controller
-          name="smell_sensitivity"
-          control={control}
-          render={({ field }) => (
-            <Toggle
-              label={t('kiosk.smellSensitivity', 'Strong Smell Sensitivity')}
-              checked={field.value ?? false}
-              onChange={field.onChange}
-            />
-          )}
-        />
-      </div>
 
       {/* Nav buttons */}
       <div className="flex gap-3 pt-2">
