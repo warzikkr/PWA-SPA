@@ -1,16 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useBookingStore } from '../../../stores/bookingStore';
 import { useConfigStore } from '../../../stores/configStore';
 import { useIntakeStore } from '../../../stores/intakeStore';
-import { clientService } from '../../../services/clientService';
+import { useClientStore } from '../../../stores/clientStore';
 import { Button, Badge, Select } from '../../../shared/components';
 import { Modal } from '../../../shared/components/Modal';
 import { getTherapistBrief } from '../../../stores/selectors/therapistBrief';
 import { PrintSessionSheet } from '../../../components/PrintSessionSheet';
 import { IntakeSummaryCard } from '../../../components/intake/IntakeSummaryCard';
-import type { Client, Booking, Intake } from '../../../types';
+import type { Client, Booking } from '../../../types';
+
+const POLL_INTERVAL = 15_000;
 
 export function BookingDetailPage() {
   const { t } = useTranslation();
@@ -20,25 +22,40 @@ export function BookingDetailPage() {
   // Detect parent route for back navigation
   const parentRoute = location.pathname.startsWith('/reception') ? '/reception' : '/admin';
   const { bookings, updateBooking, loadBookings } = useBookingStore();
-  const { getByBookingId } = useIntakeStore();
+  // Subscribe to intakes REACTIVELY — re-renders when cross-tab sync or polling updates them
+  const { intakes, loadIntakes } = useIntakeStore();
+  const { clients, loadClients } = useClientStore();
   const config = useConfigStore((s) => s.config);
 
-  const [client, setClient] = useState<Client | null>(null);
-  const [intake, setIntake] = useState<Intake | null>(null);
   const [noteModal, setNoteModal] = useState(false);
   const [note, setNote] = useState('');
 
   const booking = bookings.find((b) => b.id === id);
 
-  useEffect(() => {
+  // Derive intake reactively from store (no one-shot useEffect)
+  const intake = useMemo(
+    () => (booking ? intakes.find((i) => i.bookingId === booking.id) : undefined) ?? null,
+    [intakes, booking],
+  );
+
+  // Derive client reactively from store
+  const client = useMemo(
+    () => (booking ? clients.find((c) => c.id === booking.clientId) : undefined) ?? null,
+    [clients, booking],
+  );
+
+  // Polling for fresh data (same pattern as dashboards)
+  const refresh = useCallback(() => {
     loadBookings();
-  }, [loadBookings]);
+    loadIntakes();
+    loadClients();
+  }, [loadBookings, loadIntakes, loadClients]);
 
   useEffect(() => {
-    if (!booking) return;
-    clientService.getById(booking.clientId).then((c) => setClient(c ?? null));
-    getByBookingId(booking.id).then((i) => setIntake(i ?? null));
-  }, [booking, getByBookingId]);
+    refresh();
+    const timer = setInterval(refresh, POLL_INTERVAL);
+    return () => clearInterval(timer);
+  }, [refresh]);
 
   if (!booking) return <div className="p-8 text-brand-muted">{t('common.noData')}</div>;
 

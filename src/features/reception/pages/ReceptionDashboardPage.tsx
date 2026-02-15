@@ -1,11 +1,12 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useBookingStore } from '../../../stores/bookingStore';
 import { useConfigStore } from '../../../stores/configStore';
 import { useClientStore } from '../../../stores/clientStore';
+import { useIntakeStore } from '../../../stores/intakeStore';
 import { Badge, Button, Input, Select } from '../../../shared/components';
-import type { Client, Booking } from '../../../types';
+import type { Booking } from '../../../types';
 
 const statusVariant: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   pending: 'warning',
@@ -22,25 +23,33 @@ export function ReceptionDashboardPage() {
   const { bookings, loadBookings, updateBooking, addBooking } = useBookingStore();
   const config = useConfigStore((s) => s.config);
   const { clients: storeClients, loadClients } = useClientStore();
-  const [clientMap, setClientMap] = useState<Record<string, Client>>({});
+  const { intakes, loadIntakes } = useIntakeStore();
   const [search, setSearch] = useState('');
+
+  // Derive client map reactively from store
+  const clientMap = useMemo(() => {
+    const map: Record<string, (typeof storeClients)[number]> = {};
+    storeClients.forEach((c) => (map[c.id] = c));
+    return map;
+  }, [storeClients]);
+
+  // Set of bookingIds that have intake data
+  const intakeBookingIds = useMemo(
+    () => new Set(intakes.map((i) => i.bookingId)),
+    [intakes],
+  );
 
   const refresh = useCallback(() => {
     loadBookings();
     loadClients();
-  }, [loadBookings, loadClients]);
+    loadIntakes();
+  }, [loadBookings, loadClients, loadIntakes]);
 
   useEffect(() => {
     refresh();
     const timer = setInterval(refresh, POLL_INTERVAL);
     return () => clearInterval(timer);
   }, [refresh]);
-
-  useEffect(() => {
-    const map: Record<string, Client> = {};
-    storeClients.forEach((c) => (map[c.id] = c));
-    setClientMap(map);
-  }, [storeClients]);
 
   const today = new Date().toISOString().split('T')[0];
   const todayBookings = bookings.filter((b) => b.date === today);
@@ -156,6 +165,7 @@ export function ReceptionDashboardPage() {
                       {statusLabel(b.status)}
                     </Badge>
                     {b.source === 'walkin' && <Badge variant="info">{t('common.walkin')}</Badge>}
+                    {intakeBookingIds.has(b.id) && <Badge variant="success">{t('admin.intakeFilled', 'Intake')}</Badge>}
                     {b.paymentStatus === 'paid' && <Badge variant="success">Paid</Badge>}
                   </button>
 

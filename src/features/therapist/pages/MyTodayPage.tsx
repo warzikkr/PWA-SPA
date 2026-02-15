@@ -1,20 +1,19 @@
 /**
  * MyTodayPage — Therapist dashboard.
  *
- * Subscribes to useBookingStore.bookings and filters by therapistId + today.
- * Polls every 15s (same pattern as Admin/Reception) for cross-tab consistency.
+ * Subscribes to bookings, intakes, and clients stores REACTIVELY.
+ * Filters by therapistId + today in render.
+ * Polls every 15s for cross-tab consistency.
  */
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../../stores/authStore';
 import { useBookingStore } from '../../../stores/bookingStore';
-import { useConfigStore } from '../../../stores/configStore';
+import { useIntakeStore } from '../../../stores/intakeStore';
 import { useClientStore } from '../../../stores/clientStore';
-import { clientService } from '../../../services/clientService';
-import { intakeService } from '../../../services/intakeService';
-import { getTherapistClientView, type TherapistClientView } from '../../../stores/selectors/therapistSessionView';
+import { useConfigStore } from '../../../stores/configStore';
+import { getTherapistClientView } from '../../../stores/selectors/therapistSessionView';
 import { SessionCard } from '../components/SessionCard';
-import type { Intake } from '../../../types';
 
 const POLL_INTERVAL = 15_000;
 
@@ -24,18 +23,17 @@ export function MyTodayPage() {
   const therapistId = currentUser?.therapistId;
   const config = useConfigStore((s) => s.config);
 
-  // Subscribe to the shared booking store — reactive to all updates
+  // Subscribe to ALL three stores — reactive to cross-tab sync + polling
   const { bookings: allBookings, loadBookings } = useBookingStore();
-  const loadClients = useClientStore((s) => s.loadClients);
-
-  const [clients, setClients] = useState<Record<string, TherapistClientView>>({});
-  const [intakes, setIntakes] = useState<Record<string, Intake>>({});
+  const { intakes: allIntakes, loadIntakes } = useIntakeStore();
+  const { clients: allClients, loadClients } = useClientStore();
 
   // Polling — same as Admin/Reception dashboards
   const refresh = useCallback(() => {
     loadBookings();
+    loadIntakes();
     loadClients();
-  }, [loadBookings, loadClients]);
+  }, [loadBookings, loadIntakes, loadClients]);
 
   useEffect(() => {
     refresh();
@@ -43,7 +41,7 @@ export function MyTodayPage() {
     return () => clearInterval(timer);
   }, [refresh]);
 
-  // Filter from store: therapistId + today
+  // Filter bookings: therapistId + today
   const today = new Date().toISOString().split('T')[0];
   const myBookings = useMemo(
     () =>
@@ -53,37 +51,25 @@ export function MyTodayPage() {
     [allBookings, therapistId, today],
   );
 
-  // Load client/intake data when booking list changes
-  useEffect(() => {
-    if (myBookings.length === 0) {
-      setClients({});
-      setIntakes({});
-      return;
+  // Derive client map from store (reactive, stripped for therapist)
+  const clientMap = useMemo(() => {
+    const map: Record<string, ReturnType<typeof getTherapistClientView>> = {};
+    for (const b of myBookings) {
+      const raw = allClients.find((c) => c.id === b.clientId);
+      if (raw) map[raw.id] = getTherapistClientView(raw);
     }
+    return map;
+  }, [allClients, myBookings]);
 
-    let cancelled = false;
-
-    (async () => {
-      const clientMap: Record<string, TherapistClientView> = {};
-      const intakeMap: Record<string, Intake> = {};
-
-      for (const b of myBookings) {
-        const c = await clientService.getById(b.clientId);
-        if (c) clientMap[c.id] = getTherapistClientView(c);
-        const i = await intakeService.getByBookingId(b.id);
-        if (i) intakeMap[b.id] = i;
-      }
-
-      if (!cancelled) {
-        setClients(clientMap);
-        setIntakes(intakeMap);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [myBookings]);
+  // Derive intake map from store (reactive)
+  const intakeMap = useMemo(() => {
+    const map: Record<string, (typeof allIntakes)[number]> = {};
+    for (const b of myBookings) {
+      const i = allIntakes.find((intake) => intake.bookingId === b.id);
+      if (i) map[b.id] = i;
+    }
+    return map;
+  }, [allIntakes, myBookings]);
 
   const now = myBookings.find((b) => b.status === 'in_progress');
   const upcoming = myBookings
@@ -98,8 +84,8 @@ export function MyTodayPage() {
           <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">{t('therapist.myNow')}</h2>
           <SessionCard
             booking={now}
-            client={clients[now.clientId]}
-            intake={intakes[now.id]}
+            client={clientMap[now.clientId]}
+            intake={intakeMap[now.id]}
             config={config}
           />
         </section>
@@ -115,8 +101,8 @@ export function MyTodayPage() {
             <SessionCard
               key={b.id}
               booking={b}
-              client={clients[b.clientId]}
-              intake={intakes[b.id]}
+              client={clientMap[b.clientId]}
+              intake={intakeMap[b.id]}
               config={config}
             />
           ))}
@@ -131,8 +117,8 @@ export function MyTodayPage() {
               <SessionCard
                 key={b.id}
                 booking={b}
-                client={clients[b.clientId]}
-                intake={intakes[b.id]}
+                client={clientMap[b.clientId]}
+                intake={intakeMap[b.id]}
                 config={config}
               />
             ))}

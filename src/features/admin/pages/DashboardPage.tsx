@@ -1,11 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useBookingStore } from '../../../stores/bookingStore';
 import { useConfigStore } from '../../../stores/configStore';
 import { useClientStore } from '../../../stores/clientStore';
+import { useIntakeStore } from '../../../stores/intakeStore';
 import { Badge } from '../../../shared/components';
-import type { Client } from '../../../types';
 
 const statusVariant: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   pending: 'warning',
@@ -22,25 +22,32 @@ export function DashboardPage() {
   const { bookings, loadBookings } = useBookingStore();
   const config = useConfigStore((s) => s.config);
   const { clients: storeClients, loadClients } = useClientStore();
-  const [clientMap, setClientMap] = useState<Record<string, Client>>({});
+  const { intakes, loadIntakes } = useIntakeStore();
+
+  // Derive client map reactively from store (no local useState copy)
+  const clientMap = useMemo(() => {
+    const map: Record<string, (typeof storeClients)[number]> = {};
+    storeClients.forEach((c) => (map[c.id] = c));
+    return map;
+  }, [storeClients]);
+
+  // Set of bookingIds that have intake data (for badge display)
+  const intakeBookingIds = useMemo(
+    () => new Set(intakes.map((i) => i.bookingId)),
+    [intakes],
+  );
 
   const refresh = useCallback(() => {
     loadBookings();
     loadClients();
-  }, [loadBookings, loadClients]);
+    loadIntakes();
+  }, [loadBookings, loadClients, loadIntakes]);
 
   useEffect(() => {
     refresh();
     const timer = setInterval(refresh, POLL_INTERVAL);
     return () => clearInterval(timer);
   }, [refresh]);
-
-  // Build client lookup from store
-  useEffect(() => {
-    const map: Record<string, Client> = {};
-    storeClients.forEach((c) => (map[c.id] = c));
-    setClientMap(map);
-  }, [storeClients]);
 
   // Filter today's bookings
   const today = new Date().toISOString().split('T')[0];
@@ -109,6 +116,9 @@ export function DashboardPage() {
                 <Badge variant={statusVariant[b.status] ?? 'default'}>
                   {statusLabel(b.status)}
                 </Badge>
+                {intakeBookingIds.has(b.id) && (
+                  <Badge variant="success">{t('admin.intakeFilled', 'Intake')}</Badge>
+                )}
                 <div className="text-xs text-brand-muted">
                   {b.source === 'walkin' ? t('common.walkin') : t('common.booking')}
                 </div>

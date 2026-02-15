@@ -1,42 +1,57 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useBookingStore } from '../../../stores/bookingStore';
 import { useConfigStore } from '../../../stores/configStore';
-import { clientService } from '../../../services/clientService';
-import { intakeService } from '../../../services/intakeService';
-import { getTherapistClientView, type TherapistClientView } from '../../../stores/selectors/therapistSessionView';
+import { useIntakeStore } from '../../../stores/intakeStore';
+import { useClientStore } from '../../../stores/clientStore';
+import { getTherapistClientView } from '../../../stores/selectors/therapistSessionView';
 import { Button } from '../../../shared/components';
 import { getTherapistBrief } from '../../../stores/selectors/therapistBrief';
 import { PrintSessionSheet } from '../../../components/PrintSessionSheet';
 import { IntakeSummaryCard } from '../../../components/intake/IntakeSummaryCard';
-import type { Intake } from '../../../types';
+
+const POLL_INTERVAL = 15_000;
 
 export function SessionDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { bookings, updateBooking, loadBookings } = useBookingStore();
+  // Subscribe reactively — re-renders when intakes/clients update (cross-tab sync, polling)
+  const { intakes, loadIntakes } = useIntakeStore();
+  const { clients, loadClients } = useClientStore();
   const config = useConfigStore((s) => s.config);
 
-  // MIGRATION: use TherapistClientView — contact fields stripped at data layer
-  const [client, setClient] = useState<TherapistClientView | null>(null);
-  const [intake, setIntake] = useState<Intake | null>(null);
   const [note, setNote] = useState('');
 
   const booking = bookings.find((b) => b.id === id);
 
-  useEffect(() => {
+  // Derive intake reactively from store
+  const intake = useMemo(
+    () => (booking ? intakes.find((i) => i.bookingId === booking.id) : undefined) ?? null,
+    [intakes, booking],
+  );
+
+  // Derive client reactively, stripping contact fields for therapist
+  const client = useMemo(() => {
+    if (!booking) return null;
+    const raw = clients.find((c) => c.id === booking.clientId);
+    return raw ? getTherapistClientView(raw) : null;
+  }, [clients, booking]);
+
+  // Polling for fresh data
+  const refresh = useCallback(() => {
     loadBookings();
-  }, [loadBookings]);
+    loadIntakes();
+    loadClients();
+  }, [loadBookings, loadIntakes, loadClients]);
 
   useEffect(() => {
-    if (!booking) return;
-    clientService.getById(booking.clientId).then((c) =>
-      setClient(c ? getTherapistClientView(c) : null)
-    );
-    intakeService.getByBookingId(booking.id).then((i) => setIntake(i ?? null));
-  }, [booking]);
+    refresh();
+    const timer = setInterval(refresh, POLL_INTERVAL);
+    return () => clearInterval(timer);
+  }, [refresh]);
 
   if (!booking) return <div className="p-8 text-brand-muted">{t('therapist.sessionDetail')}</div>;
 
