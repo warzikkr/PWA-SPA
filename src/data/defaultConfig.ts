@@ -194,20 +194,13 @@ export const defaultConfig: AppConfig = {
         {
           id: 'focus_zones',
           type: 'bodymap',
-          label: 'Focus Zones (1-2 main)',
+          label: 'Focus Zones',
           required: true,
           enabled: true,
           order: 0,
           validation: { min: 1, max: 2 },
         },
-        {
-          id: 'secondary_zones',
-          type: 'bodymap',
-          label: 'Secondary Zones',
-          required: false,
-          enabled: true,
-          order: 1,
-        },
+        /* secondary_zones removed — merged into focus_zones */
         {
           id: 'avoid_zones',
           type: 'bodymap',

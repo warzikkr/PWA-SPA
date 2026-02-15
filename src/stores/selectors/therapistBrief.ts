@@ -6,6 +6,7 @@ export interface TherapistBrief {
   deepTissue: boolean;
   goal: string[];
   focusZones: BodyZoneSelection[];
+  /** @deprecated secondary zones removed; kept for legacy data compat */
   secondaryZones: BodyZoneSelection[];
   avoidZones: BodyZoneSelection[];
   sensitiveAreas: string[];

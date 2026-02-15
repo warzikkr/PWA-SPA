@@ -125,7 +125,7 @@ export function SessionDetailPage() {
               <UnifiedBodyMap mode="readonly" focusZones={brief.focusZones} avoidZones={brief.avoidZones} compact />
             )}
             {renderZoneGroup(brief.focusZones, t('therapist.focus'), 'text-brand-green')}
-            {renderZoneGroup(brief.secondaryZones, t('therapist.secondary'), 'text-brand-muted')}
+            {/* secondary zones removed */}
             {renderZoneGroup(brief.avoidZones, t('therapist.avoid'), 'text-red-500')}
             {brief.sensitiveAreas.length > 0 && (
               <div>
