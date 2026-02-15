@@ -93,12 +93,11 @@ export function ReceptionDashboardPage() {
 
   const handleCreateWalkin = async () => {
     await addBooking({
-      clientId: '',
       status: 'pending',
       date: today,
       paymentStatus: 'unpaid',
       source: 'walkin',
-    });
+    } as Omit<Booking, 'id' | 'createdAt'>);
   };
 
   return (
