@@ -195,10 +195,9 @@ export const defaultConfig: AppConfig = {
           id: 'focus_zones',
           type: 'bodymap',
           label: 'Focus Zones',
-          required: true,
+          required: false,
           enabled: true,
           order: 0,
-          validation: { min: 1, max: 2 },
         },
         /* secondary_zones removed — merged into focus_zones */
         {
