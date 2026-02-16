@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useConfigStore } from '../../../stores/configStore';
 import { Button, Input, Toggle } from '../../../shared/components';
 import { Modal } from '../../../shared/components/Modal';
-import type { ConfigOption, StepDefinition, FieldDefinition, FieldOption, AppConfig } from '../../../types/config';
+import type { ConfigOption, TherapistConfigOption, TherapistScheduleSlot, StepDefinition, FieldDefinition, FieldOption, AppConfig } from '../../../types/config';
 
 type OptionListKey = keyof {
   [K in keyof AppConfig as AppConfig[K] extends ConfigOption[] ? K : never]: true;
@@ -337,6 +337,10 @@ export function ConfigPage() {
                 />
               </div>
             )}
+
+            {activeOption === 'therapists' && (
+              <TherapistScheduleEditor config={config} updateConfig={updateConfig} />
+            )}
           </div>
         </div>
       )}
@@ -465,6 +469,122 @@ export function ConfigPage() {
           </div>
         )}
       </Modal>
+    </div>
+  );
+}
+
+/* ── Therapist Schedule Editor (inline component) ── */
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function TherapistScheduleEditor({
+  config,
+  updateConfig,
+}: {
+  config: AppConfig;
+  updateConfig: (partial: Partial<AppConfig>) => Promise<void>;
+}) {
+  const therapists = config.therapists as TherapistConfigOption[];
+
+  const getSlot = (th: TherapistConfigOption, dow: number): TherapistScheduleSlot | undefined =>
+    th.schedule?.find((s) => s.dayOfWeek === dow);
+
+  const updateSchedule = (therapistId: string, dow: number, slot: TherapistScheduleSlot | null) => {
+    const updated = therapists.map((th) => {
+      if (th.id !== therapistId) return th;
+      const schedule = (th.schedule ?? []).filter((s) => s.dayOfWeek !== dow);
+      if (slot) schedule.push(slot);
+      return { ...th, schedule };
+    });
+    updateConfig({ therapists: updated });
+  };
+
+  const toggleDay = (therapistId: string, dow: number) => {
+    const th = therapists.find((t) => t.id === therapistId);
+    if (!th) return;
+    const existing = getSlot(th, dow);
+    if (existing) {
+      updateSchedule(therapistId, dow, null);
+    } else {
+      updateSchedule(therapistId, dow, { dayOfWeek: dow, startTime: '10:00', endTime: '18:00' });
+    }
+  };
+
+  const updateTime = (therapistId: string, dow: number, field: 'startTime' | 'endTime', value: string) => {
+    const th = therapists.find((t) => t.id === therapistId);
+    if (!th) return;
+    const existing = getSlot(th, dow);
+    if (!existing) return;
+    updateSchedule(therapistId, dow, { ...existing, [field]: value });
+  };
+
+  return (
+    <div className="mt-6 pt-4 border-t border-brand-border space-y-6">
+      {/* Slot settings */}
+      <div className="flex items-center gap-6">
+        <div>
+          <label className="text-sm font-medium text-brand-dark">Slot Duration (min)</label>
+          <input
+            type="number"
+            className="mt-1 w-24 px-3 py-2 border border-brand-border rounded-lg text-sm"
+            value={config.slotDurationMinutes}
+            onChange={(e) => updateConfig({ slotDurationMinutes: Number(e.target.value) || 60 })}
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-brand-dark">Buffer (min)</label>
+          <input
+            type="number"
+            className="mt-1 w-24 px-3 py-2 border border-brand-border rounded-lg text-sm"
+            value={config.bookingBufferMinutes}
+            onChange={(e) => updateConfig({ bookingBufferMinutes: Number(e.target.value) || 0 })}
+          />
+        </div>
+      </div>
+
+      <h4 className="font-semibold text-brand-dark">Therapist Schedules</h4>
+
+      {therapists.filter((th) => th.enabled).map((th) => (
+        <div key={th.id} className="border border-brand-border rounded-lg p-3">
+          <div className="font-medium text-brand-dark mb-3">{th.label}</div>
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
+              const slot = getSlot(th, dow);
+              const isActive = !!slot;
+              return (
+                <div key={dow} className="flex items-center gap-3">
+                  <span className="w-10 text-xs font-medium text-brand-muted">{DAY_LABELS[dow]}</span>
+                  <button
+                    onClick={() => toggleDay(th.id, dow)}
+                    className={`w-8 h-5 rounded-full transition-colors relative ${isActive ? 'bg-brand-green' : 'bg-gray-300'}`}
+                  >
+                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${isActive ? 'left-3.5' : 'left-0.5'}`} />
+                  </button>
+                  {isActive ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="time"
+                        className="px-2 py-1 border border-brand-border rounded text-sm"
+                        value={slot!.startTime}
+                        onChange={(e) => updateTime(th.id, dow, 'startTime', e.target.value)}
+                      />
+                      <span className="text-brand-muted text-sm">—</span>
+                      <input
+                        type="time"
+                        className="px-2 py-1 border border-brand-border rounded text-sm"
+                        value={slot!.endTime}
+                        onChange={(e) => updateTime(th.id, dow, 'endTime', e.target.value)}
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-xs text-brand-muted">Off</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

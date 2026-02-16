@@ -23,6 +23,7 @@ export function AdminLayout() {
 
   const navItems = [
     { to: '/admin', label: t('menu.dashboard'), end: true },
+    { to: '/admin/calendar', label: 'Calendar' },
     { to: '/admin/clients', label: t('menu.clients') },
     { to: '/admin/users', label: 'Users' },
     { to: '/admin/change-requests', label: `Requests${pendingCount > 0 ? ` (${pendingCount})` : ''}` },

@@ -48,8 +48,8 @@ $$;
 -- (Config is stored as JSONB in app_config table. The default config in code is the primary source,
 -- but if admin has customized config, this updates the stored statuses.)
 UPDATE public.app_config
-SET data = jsonb_set(
-  data,
+SET config = jsonb_set(
+  config,
   '{statuses}',
   '[
     {"id": "scheduled", "label": "Scheduled", "enabled": true},
@@ -60,4 +60,4 @@ SET data = jsonb_set(
     {"id": "cancelled", "label": "Cancelled", "enabled": true}
   ]'::jsonb
 )
-WHERE data ? 'statuses';
+WHERE config ? 'statuses';

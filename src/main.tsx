@@ -17,8 +17,11 @@ if ('serviceWorker' in navigator) {
           if (!newWorker) return;
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-              // New SW active — reload to use fresh assets
-              window.location.reload();
+              const key = '__sw_reloaded';
+              if (!sessionStorage.getItem(key)) {
+                sessionStorage.setItem(key, '1');
+                window.location.reload();
+              }
             }
           });
         });

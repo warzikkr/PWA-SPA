@@ -26,6 +26,7 @@ import { ConfigPage } from '../features/admin/pages/ConfigPage';
 import { UserManagementPage } from '../features/admin/pages/UserManagementPage';
 import { ClientProfilePage } from '../features/admin/pages/ClientProfilePage';
 import { ChangeRequestsPage } from '../features/admin/pages/ChangeRequestsPage';
+import { CalendarPage } from '../features/admin/pages/CalendarPage';
 
 // Reception pages
 import { ReceptionDashboardPage } from '../features/reception/pages/ReceptionDashboardPage';
@@ -71,6 +72,7 @@ export const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { index: true, element: <DashboardPage /> },
+          { path: 'calendar', element: <CalendarPage /> },
           { path: 'booking/:id', element: <BookingDetailPage /> },
           { path: 'clients', element: <ClientsPage /> },
           { path: 'clients/:clientId', element: <ClientProfilePage /> },
