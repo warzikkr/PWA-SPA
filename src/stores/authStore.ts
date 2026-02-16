@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         return { success: false, error: 'Account disabled' };
       }
 
-      set({ currentUser: appUser });
+      set({ currentUser: appUser, loading: false });
       return { success: true };
     } catch (err) {
       console.error('[Auth] login error:', err);
@@ -69,52 +69,65 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 }));
 
-// Safety timeout — if auth never resolves, force loading=false after 15s
-const AUTH_TIMEOUT = 15_000;
-setTimeout(() => {
-  if (useAuthStore.getState().loading) {
-    console.warn('[Auth] Timed out waiting for session — forcing loading=false');
-    useAuthStore.setState({ currentUser: null, loading: false });
-  }
-}, AUTH_TIMEOUT);
-
 /**
- * Single auth listener — handles all session lifecycle events.
- * INITIAL_SESSION fires once on startup with the restored session.
+ * Explicitly restore session on startup via getSession().
+ * Does NOT rely on INITIAL_SESSION event timing (which can be missed
+ * if the listener is registered after the event fires).
  */
-supabase.auth.onAuthStateChange(async (event, session) => {
-  console.info(`[Auth] onAuthStateChange: event=${event}, hasSession=${!!session}, hasUser=${!!session?.user}`);
+async function initAuth() {
+  console.info('[Auth] initAuth: calling getSession()…');
   try {
-    if (event === 'INITIAL_SESSION') {
-      if (!session?.user) {
-        console.info('[Auth] INITIAL_SESSION: no session — going to login');
-        useAuthStore.setState({ currentUser: null, loading: false });
-        return;
-      }
-      console.info('[Auth] INITIAL_SESSION: restoring user profile…');
-      const appUser = await fetchAppUser(session.user.id);
-      console.info(`[Auth] INITIAL_SESSION: profile ${appUser ? 'found' : 'NOT found'}`);
-      useAuthStore.setState({ currentUser: appUser ?? null, loading: false });
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('[Auth] initAuth: getSession error:', error.message);
+      useAuthStore.setState({ currentUser: null, loading: false });
       return;
     }
-
-    if (event === 'SIGNED_OUT') {
-      console.info('[Auth] SIGNED_OUT');
-      useAuthStore.setState({ currentUser: null });
-    }
-
-    if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
-      if (session?.user) {
-        const appUser = await fetchAppUser(session.user.id);
-        if (appUser) {
-          useAuthStore.setState({ currentUser: appUser });
-        }
-      }
-    }
-  } catch (err) {
-    console.error('[Auth] onAuthStateChange error:', err);
-    if (event === 'INITIAL_SESSION') {
+    if (!session?.user) {
+      console.info('[Auth] initAuth: no session');
       useAuthStore.setState({ currentUser: null, loading: false });
+      return;
+    }
+    console.info('[Auth] initAuth: session found, fetching profile…');
+    const appUser = await fetchAppUser(session.user.id);
+    console.info(`[Auth] initAuth: profile ${appUser ? 'OK (' + appUser.role + ')' : 'NOT found'}`);
+    useAuthStore.setState({ currentUser: appUser ?? null, loading: false });
+  } catch (err) {
+    console.error('[Auth] initAuth error:', err);
+    useAuthStore.setState({ currentUser: null, loading: false });
+  }
+}
+
+initAuth();
+
+// Safety timeout — if initAuth somehow hangs
+setTimeout(() => {
+  if (useAuthStore.getState().loading) {
+    console.warn('[Auth] Timed out — forcing loading=false');
+    useAuthStore.setState({ currentUser: null, loading: false });
+  }
+}, 15_000);
+
+/**
+ * Listen for subsequent auth events (sign-in, sign-out, token refresh).
+ * Initial session is handled by initAuth() above.
+ */
+supabase.auth.onAuthStateChange(async (event, session) => {
+  console.info(`[Auth] event: ${event}`);
+
+  // Skip INITIAL_SESSION — already handled by initAuth()
+  if (event === 'INITIAL_SESSION') return;
+
+  if (event === 'SIGNED_OUT') {
+    useAuthStore.setState({ currentUser: null, loading: false });
+    return;
+  }
+
+  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    if (!session?.user) return;
+    const appUser = await fetchAppUser(session.user.id);
+    if (appUser) {
+      useAuthStore.setState({ currentUser: appUser, loading: false });
     }
   }
 });
