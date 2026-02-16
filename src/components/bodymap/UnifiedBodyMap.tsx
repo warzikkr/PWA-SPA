@@ -10,7 +10,8 @@
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BodySide, BodyHalf, BodyRegion, BodyGender, BodyZoneSelection } from '../../types';
+import type { BodySide, BodyHalf, BodyRegion, BodyZoneSelection } from '../../types';
+import type { BodyGender } from '../../types';
 import { getBodySVG } from './BodySVG';
 import {
   BILATERAL,
@@ -48,7 +49,7 @@ export interface UnifiedBodyMapProps {
   error?: string;
   /** Smaller sizing for card embeds */
   compact?: boolean;
-  /** Pre-selected gender (readonly mode); edit mode has internal toggle */
+  /** Body figure gender (determined during registration) */
   gender?: BodyGender;
 }
 
@@ -68,9 +69,8 @@ export function UnifiedBodyMap({
 }: UnifiedBodyMapProps) {
   const { t } = useTranslation();
   const [activeSide, setActiveSide] = useState<BodySide>('front');
-  const [activeGender, setActiveGender] = useState<BodyGender>(genderProp ?? 'female');
 
-  const gender = genderProp ?? activeGender;
+  const gender: BodyGender = genderProp === 'male' ? 'male' : 'female';
 
   const positions = activeSide === 'front' ? FRONT_POSITIONS : BACK_POSITIONS;
   const entries = getZoneEntries(activeSide);
@@ -163,20 +163,10 @@ export function UnifiedBodyMap({
     <div className="flex flex-col gap-2">
       {label && <span className="text-sm font-medium text-brand-dark">{label}</span>}
 
-      {/* Gender + Front/Back toggles */}
-      <div className="flex justify-center gap-2">
-        {/* Gender toggle */}
-        {!genderProp && (
-          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-            {toggleBtn(gender === 'female', () => setActiveGender('female'), t('bodyMap.female'))}
-            {toggleBtn(gender === 'male', () => setActiveGender('male'), t('bodyMap.male'))}
-          </div>
-        )}
-        {/* Front / Back toggle */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-          {toggleBtn(activeSide === 'front', () => setActiveSide('front'), t('bodyMap.front'))}
-          {toggleBtn(activeSide === 'back', () => setActiveSide('back'), t('bodyMap.back'))}
-        </div>
+      {/* Front / Back toggle */}
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 max-w-[180px] mx-auto">
+        {toggleBtn(activeSide === 'front', () => setActiveSide('front'), t('bodyMap.front'))}
+        {toggleBtn(activeSide === 'back', () => setActiveSide('back'), t('bodyMap.back'))}
       </div>
 
       {/* Body SVG + zone overlays */}

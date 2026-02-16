@@ -1,254 +1,309 @@
 /**
- * BodySVG.tsx — Anatomical body outlines for the body-map component.
+ * BodySVG.tsx — Professional anatomical body outlines (Female/Male × Front/Back).
  *
- * Four variants: Female/Male × Front/Back.
- * ViewBox: 0 0 100 200  —  positions are in the same coordinate space
- * as the hitbox data in bodyMapData.ts.
+ * ViewBox 0 0 100 200.  Outlines drawn with cubic-Bézier curves for smooth,
+ * fashion-croquis quality.  Front/back share the same silhouette — only the
+ * anatomical guide lines differ.
  */
 import type { BodyGender, BodySide } from '../../types';
 
-const O = '#bbb';   // outline stroke
-const G = '#ddd';   // guide / detail stroke
-const SW = '0.5';   // main stroke width
-const GW = '0.3';   // guide stroke width
+/* ── palette ── */
+const O = '#b0b0b0';
+const G = '#d4d4d4';
+const SW = '0.45';
+const GW = '0.3';
 const DASH = '1.5 1.5';
 
-/* ── Shared sub-components ── */
+/* ================================================================
+   Shared silhouettes — each gender has ONE outline used for both
+   front and back views.
+   ================================================================ */
 
-function FaceHints() {
+function FemaleSilhouette() {
   return (
-    <>
-      <circle cx="46" cy="13" r="1" stroke={G} strokeWidth={GW} />
-      <circle cx="54" cy="13" r="1" stroke={G} strokeWidth={GW} />
-      <line x1="50" y1="15" x2="50" y2="17" stroke={G} strokeWidth={GW} />
-      <path d="M47.5 19 Q50 20.5 52.5 19" stroke={G} strokeWidth={GW} />
-    </>
+    <g stroke={O} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round">
+      {/* Head */}
+      <ellipse cx="50" cy="14" rx="8" ry="10" />
+
+      {/* Neck */}
+      <path d="M43.5 23 C43 27 42 30 41.5 33" />
+      <path d="M56.5 23 C57 27 58 30 58.5 33" />
+
+      {/* Torso */}
+      <path d="
+        M24 37
+        C22 37 21 40 22 44
+        C24 49 28 52 32 55
+        C34 57 35 60 35 63
+        C35 67 32 72 29 77
+        C27 81 28 85 33 88
+        C38 90 44 91 50 92
+        C56 91 62 90 67 88
+        C72 85 73 81 71 77
+        C68 72 65 67 65 63
+        C65 60 66 57 68 55
+        C72 52 76 49 78 44
+        C79 40 78 37 76 37
+        C70 35 60 34 50 33
+        C40 34 30 35 24 37 Z
+      " />
+
+      {/* Left arm */}
+      <path d="
+        M22 43
+        C19 50 17 57 15 65
+        C13 73 12 81 11 89
+        C10 95 10 99 11 103
+        C12 105 14 104 15 102
+        C15 98 16 92 17 86
+        C18 78 19 70 21 62
+        C23 54 25 48 27 44
+      " />
+
+      {/* Right arm */}
+      <path d="
+        M78 43
+        C81 50 83 57 85 65
+        C87 73 88 81 89 89
+        C90 95 90 99 89 103
+        C88 105 86 104 85 102
+        C85 98 84 92 83 86
+        C82 78 81 70 79 62
+        C77 54 75 48 73 44
+      " />
+
+      {/* Left leg */}
+      <path d="
+        M36 88
+        C35 96 34 106 33 118
+        C32 130 32 140 31 152
+        C31 162 30 172 30 178
+        L28 192
+        L36 192
+        C36 186 37 178 37 170
+        C38 158 38 146 39 134
+        C40 122 41 110 42 98
+        C42 94 43 91 44 88
+      " />
+
+      {/* Right leg */}
+      <path d="
+        M56 88
+        C57 91 58 94 58 98
+        C59 110 60 122 61 134
+        C62 146 62 158 63 170
+        C63 178 64 186 64 192
+        L72 192
+        L70 178
+        C69 172 69 162 69 152
+        C68 140 68 130 67 118
+        C66 106 65 96 64 88
+      " />
+    </g>
   );
 }
 
-function CentreLine({ y1, y2 }: { y1: number; y2: number }) {
+function MaleSilhouette() {
   return (
-    <line
-      x1="50" y1={y1} x2="50" y2={y2}
-      stroke={G} strokeWidth="0.4" strokeDasharray="2 2" opacity="0.25"
-    />
+    <g stroke={O} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round">
+      {/* Head */}
+      <ellipse cx="50" cy="14" rx="8.5" ry="10" />
+
+      {/* Neck (wider) */}
+      <path d="M43 23 C42 27 41 30 40 33" />
+      <path d="M57 23 C58 27 59 30 60 33" />
+
+      {/* Torso — broader shoulders, less waist taper, narrower hips */}
+      <path d="
+        M21 37
+        C19 37 18 40 19 44
+        C21 49 25 52 30 55
+        C32 57 33 60 33 63
+        C33 67 31 72 31 77
+        C30 81 31 85 36 88
+        C41 90 46 91 50 92
+        C54 91 59 90 64 88
+        C69 85 70 81 69 77
+        C69 72 67 67 67 63
+        C67 60 68 57 70 55
+        C75 52 79 49 81 44
+        C82 40 81 37 79 37
+        C72 35 60 34 50 33
+        C40 34 28 35 21 37 Z
+      " />
+
+      {/* Left arm (thicker) */}
+      <path d="
+        M20 43
+        C17 50 14 57 12 65
+        C10 73 9 81 8 89
+        C7 95 7 99 8 103
+        C9 106 12 105 13 102
+        C13 98 13 92 14 86
+        C15 78 17 70 19 62
+        C21 54 23 48 25 44
+      " />
+
+      {/* Right arm */}
+      <path d="
+        M80 43
+        C83 50 86 57 88 65
+        C90 73 91 81 92 89
+        C93 95 93 99 92 103
+        C91 106 88 105 87 102
+        C87 98 87 92 86 86
+        C85 78 83 70 81 62
+        C79 54 77 48 75 44
+      " />
+
+      {/* Left leg (slightly wider) */}
+      <path d="
+        M38 88
+        C37 96 35 106 34 118
+        C33 130 33 140 32 152
+        C32 162 31 172 31 178
+        L29 192
+        L37 192
+        C37 186 37 178 38 170
+        C38 158 39 146 40 134
+        C40 122 41 110 42 98
+        C43 94 44 91 46 88
+      " />
+
+      {/* Right leg */}
+      <path d="
+        M54 88
+        C56 91 57 94 58 98
+        C59 110 60 122 60 134
+        C61 146 62 158 62 170
+        C63 178 63 186 63 192
+        L71 192
+        L69 178
+        C69 172 68 162 68 152
+        C67 140 67 130 66 118
+        C65 106 63 96 62 88
+      " />
+    </g>
   );
 }
 
-/* ── Female Front ── */
+/* ================================================================
+   Guide lines — differ between front and back views
+   ================================================================ */
+
+function FrontGuides({ isMale }: { isMale?: boolean }) {
+  const sx = isMale ? 21 : 24;
+  const ex = isMale ? 79 : 76;
+  return (
+    <g stroke={G} strokeWidth={GW} fill="none">
+      {/* Face hints */}
+      <circle cx="46.5" cy="12" r="0.9" />
+      <circle cx="53.5" cy="12" r="0.9" />
+      <path d="M48 17 Q50 18.5 52 17" />
+
+      {/* Collarbone */}
+      <path d={`M44 34 C38 36 30 37 ${sx} 37`} />
+      <path d={`M56 34 C62 36 70 37 ${ex} 37`} />
+
+      {/* Centre line */}
+      <line x1="50" y1="34" x2="50" y2="92" strokeDasharray="2 2" opacity="0.25" strokeWidth="0.4" />
+
+      {/* Bust / Pec line */}
+      <path d={`M${sx + 8} 50 Q42 ${isMale ? 53 : 54} 50 ${isMale ? 52 : 53} Q58 ${isMale ? 53 : 54} ${ex - 8} 50`} strokeDasharray={DASH} />
+
+      {/* Waist */}
+      <path d={`M${sx + 10} 63 Q42 65 50 64 Q58 65 ${ex - 10} 63`} strokeDasharray={DASH} />
+
+      {/* Navel */}
+      <circle cx="50" cy="68" r="0.7" />
+
+      {/* Hip line */}
+      <path d="M30 77 Q40 79 50 78 Q60 79 70 77" strokeDasharray={DASH} />
+
+      {/* Kneecap hints */}
+      <ellipse cx="36" cy="132" rx="3" ry="3.5" strokeDasharray="1 1" />
+      <ellipse cx="64" cy="132" rx="3" ry="3.5" strokeDasharray="1 1" />
+
+      {/* Ankle hints */}
+      <circle cx="33" cy="180" r="1.5" />
+      <circle cx="67" cy="180" r="1.5" />
+    </g>
+  );
+}
+
+function BackGuides({ isMale }: { isMale?: boolean }) {
+  return (
+    <g stroke={G} strokeWidth={GW} fill="none">
+      {/* Hair line hint */}
+      <path d="M43 8 Q46 5 50 4.5 Q54 5 57 8" />
+
+      {/* Spine */}
+      <line x1="50" y1="28" x2="50" y2="92" strokeWidth="0.5" />
+
+      {/* Scapulae */}
+      <path d={`M${isMale ? 34 : 36} 43 Q${isMale ? 39 : 40} 49 ${isMale ? 46 : 46} 45`} strokeDasharray="1 1" />
+      <path d={`M${isMale ? 66 : 64} 43 Q${isMale ? 61 : 60} 49 ${isMale ? 54 : 54} 45`} strokeDasharray="1 1" />
+
+      {/* Mid-back line */}
+      <path d="M33 57 Q42 59 50 58 Q58 59 67 57" strokeDasharray={DASH} />
+
+      {/* Lower-back line */}
+      <path d="M32 72 Q41 74 50 73 Q59 74 68 72" strokeDasharray={DASH} />
+
+      {/* Glute line */}
+      <path d="M36 85 Q44 90 50 88 Q56 90 64 85" strokeDasharray="1 1" />
+
+      {/* Knee crease */}
+      <path d="M33 132 Q36 134 40 132" />
+      <path d="M60 132 Q64 134 67 132" />
+
+      {/* Ankle hints */}
+      <circle cx="33" cy="180" r="1.5" />
+      <circle cx="67" cy="180" r="1.5" />
+
+      {/* Achilles tendon */}
+      <line x1="33.5" y1="162" x2="33" y2="178" strokeDasharray="1 1.5" />
+      <line x1="66.5" y1="162" x2="67" y2="178" strokeDasharray="1 1.5" />
+    </g>
+  );
+}
+
+/* ================================================================
+   Exported SVG components (4 variants)
+   ================================================================ */
 
 export function FemaleFrontSVG() {
   return (
-    <svg viewBox="0 0 100 200" className="w-full h-full" fill="none" strokeWidth={SW}>
-      {/* Head */}
-      <ellipse cx="50" cy="16" rx="9" ry="11.5" stroke={O} />
-      <FaceHints />
-
-      {/* Neck */}
-      <line x1="44" y1="27" x2="43" y2="35" stroke={O} />
-      <line x1="56" y1="27" x2="57" y2="35" stroke={O} />
-
-      {/* Torso */}
-      <path
-        d="M26 38 Q23 38 20 44 Q24 50 30 52 L34 60 Q31 68 28 76 L28 83 Q30 90 38 93 L46 93 Q50 96 54 93 L62 93 Q70 90 72 83 L72 76 Q69 68 66 60 L70 52 Q76 50 80 44 Q77 38 74 38 Z"
-        stroke={O}
-      />
-      {/* Collarbone */}
-      <path d="M44 36 Q36 38 26 38" stroke={G} strokeWidth={GW} />
-      <path d="M56 36 Q64 38 74 38" stroke={G} strokeWidth={GW} />
-      {/* Bust line */}
-      <path d="M34 48 Q42 52 50 50 Q58 52 66 48" stroke={G} strokeWidth={GW} strokeDasharray={DASH} />
-      <CentreLine y1={38} y2={93} />
-      {/* Navel */}
-      <circle cx="50" cy="68" r="0.8" stroke={G} strokeWidth={GW} />
-      {/* Waist hint */}
-      <path d="M34 60 Q42 62 50 61 Q58 62 66 60" stroke={G} strokeWidth={GW} strokeDasharray={DASH} />
-      {/* Hip crease */}
-      <path d="M40 82 Q44 86 48 84" stroke={G} strokeWidth={GW} />
-      <path d="M60 82 Q56 86 52 84" stroke={G} strokeWidth={GW} />
-
-      {/* Left arm */}
-      <path d="M22 42 Q16 54 12 66 Q8 78 8 88 Q7 96 10 102 L14 98 Q14 90 14 82 Q16 70 18 60 Q20 50 22 44" stroke={O} />
-      {/* Right arm */}
-      <path d="M78 42 Q84 54 88 66 Q92 78 92 88 Q93 96 90 102 L86 98 Q86 90 86 82 Q84 70 82 60 Q80 50 78 44" stroke={O} />
-      {/* Elbow hints */}
-      <ellipse cx="13" cy="67" rx="2" ry="2.5" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      <ellipse cx="87" cy="67" rx="2" ry="2.5" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-
-      {/* Left leg */}
-      <path d="M38 93 Q36 110 35 126 Q34 140 33 152 Q32 164 31 176 L29 188 L36 188 Q37 176 37 164 Q38 152 38 140 Q39 128 40 118 Q42 106 44 93" stroke={O} />
-      {/* Right leg */}
-      <path d="M56 93 Q58 106 60 118 Q61 128 62 140 Q62 152 63 164 Q63 176 64 188 L71 188 Q69 176 68 164 Q67 152 66 140 Q66 128 65 126 Q64 110 62 93" stroke={O} />
-      {/* Kneecap hints */}
-      <ellipse cx="36.5" cy="130" rx="3" ry="4" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      <ellipse cx="63.5" cy="130" rx="3" ry="4" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      {/* Ankle hints */}
-      <circle cx="33" cy="178" r="1.5" stroke={G} strokeWidth={GW} />
-      <circle cx="67" cy="178" r="1.5" stroke={G} strokeWidth={GW} />
+    <svg viewBox="0 0 100 200" className="w-full h-full" fill="none">
+      <FemaleSilhouette />
+      <FrontGuides />
     </svg>
   );
 }
-
-/* ── Female Back ── */
 
 export function FemaleBackSVG() {
   return (
-    <svg viewBox="0 0 100 200" className="w-full h-full" fill="none" strokeWidth={SW}>
-      {/* Head */}
-      <ellipse cx="50" cy="16" rx="9" ry="11.5" stroke={O} />
-      {/* Hair hint */}
-      <path d="M42 10 Q44 6 50 5 Q56 6 58 10" stroke={G} strokeWidth={GW} />
-
-      {/* Neck */}
-      <line x1="44" y1="27" x2="43" y2="35" stroke={O} />
-      <line x1="56" y1="27" x2="57" y2="35" stroke={O} />
-
-      {/* Torso */}
-      <path
-        d="M26 38 Q23 38 20 44 Q24 50 30 52 L34 60 Q31 68 28 76 L28 83 Q30 90 38 93 L46 93 Q50 96 54 93 L62 93 Q70 90 72 83 L72 76 Q69 68 66 60 L70 52 Q76 50 80 44 Q77 38 74 38 Z"
-        stroke={O}
-      />
-      {/* Spine */}
-      <line x1="50" y1="28" x2="50" y2="93" stroke={G} strokeWidth="0.6" />
-      {/* Scapulae */}
-      <path d="M36 42 Q40 48 46 44" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      <path d="M64 42 Q60 48 54 44" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      {/* Mid-back line */}
-      <path d="M34 56 Q42 58 50 57 Q58 58 66 56" stroke={G} strokeWidth={GW} strokeDasharray={DASH} />
-      {/* Lower-back line */}
-      <path d="M32 70 Q41 72 50 71 Q59 72 68 70" stroke={G} strokeWidth={GW} strokeDasharray={DASH} />
-      {/* Glute line */}
-      <path d="M36 84 Q44 90 50 87 Q56 90 64 84" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-
-      {/* Left arm */}
-      <path d="M22 42 Q16 54 12 66 Q8 78 8 88 Q7 96 10 102 L14 98 Q14 90 14 82 Q16 70 18 60 Q20 50 22 44" stroke={O} />
-      {/* Right arm */}
-      <path d="M78 42 Q84 54 88 66 Q92 78 92 88 Q93 96 90 102 L86 98 Q86 90 86 82 Q84 70 82 60 Q80 50 78 44" stroke={O} />
-      {/* Elbow hints */}
-      <ellipse cx="13" cy="67" rx="2" ry="2.5" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      <ellipse cx="87" cy="67" rx="2" ry="2.5" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-
-      {/* Left leg */}
-      <path d="M38 93 Q36 110 35 126 Q34 140 33 152 Q32 164 31 176 L29 188 L36 188 Q37 176 37 164 Q38 152 38 140 Q39 128 40 118 Q42 106 44 93" stroke={O} />
-      {/* Right leg */}
-      <path d="M56 93 Q58 106 60 118 Q61 128 62 140 Q62 152 63 164 Q63 176 64 188 L71 188 Q69 176 68 164 Q67 152 66 140 Q66 128 65 126 Q64 110 62 93" stroke={O} />
-      {/* Knee crease */}
-      <path d="M33 130 Q36.5 133 40 130" stroke={G} strokeWidth={GW} />
-      <path d="M60 130 Q63.5 133 67 130" stroke={G} strokeWidth={GW} />
-      {/* Ankle hints */}
-      <circle cx="33" cy="178" r="1.5" stroke={G} strokeWidth={GW} />
-      <circle cx="67" cy="178" r="1.5" stroke={G} strokeWidth={GW} />
-      {/* Achilles */}
-      <line x1="33.5" y1="160" x2="33" y2="176" stroke={G} strokeWidth={GW} strokeDasharray="1 1.5" />
-      <line x1="66.5" y1="160" x2="67" y2="176" stroke={G} strokeWidth={GW} strokeDasharray="1 1.5" />
+    <svg viewBox="0 0 100 200" className="w-full h-full" fill="none">
+      <FemaleSilhouette />
+      <BackGuides />
     </svg>
   );
 }
-
-/* ── Male Front ── */
 
 export function MaleFrontSVG() {
   return (
-    <svg viewBox="0 0 100 200" className="w-full h-full" fill="none" strokeWidth={SW}>
-      {/* Head */}
-      <ellipse cx="50" cy="16" rx="9.5" ry="11.5" stroke={O} />
-      <FaceHints />
-
-      {/* Neck (thicker) */}
-      <line x1="43" y1="27" x2="42" y2="35" stroke={O} />
-      <line x1="57" y1="27" x2="58" y2="35" stroke={O} />
-
-      {/* Torso (wider shoulders, straighter) */}
-      <path
-        d="M22 38 Q19 38 17 44 Q20 50 28 52 L32 60 Q31 68 30 76 L31 83 Q33 90 40 93 L46 93 Q50 95 54 93 L60 93 Q67 90 69 83 L70 76 Q69 68 68 60 L72 52 Q80 50 83 44 Q81 38 78 38 Z"
-        stroke={O}
-      />
-      {/* Collarbone */}
-      <path d="M43 36 Q34 38 22 38" stroke={G} strokeWidth={GW} />
-      <path d="M57 36 Q66 38 78 38" stroke={G} strokeWidth={GW} />
-      {/* Pec line */}
-      <path d="M32 48 Q40 52 50 50 Q60 52 68 48" stroke={G} strokeWidth={GW} strokeDasharray={DASH} />
-      <CentreLine y1={38} y2={93} />
-      {/* Navel */}
-      <circle cx="50" cy="70" r="0.8" stroke={G} strokeWidth={GW} />
-      {/* Waist hint */}
-      <path d="M32 60 Q42 62 50 61 Q58 62 68 60" stroke={G} strokeWidth={GW} strokeDasharray={DASH} />
-      {/* Hip crease */}
-      <path d="M42 82 Q46 86 49 84" stroke={G} strokeWidth={GW} />
-      <path d="M58 82 Q54 86 51 84" stroke={G} strokeWidth={GW} />
-
-      {/* Left arm (bigger) */}
-      <path d="M19 42 Q14 54 10 66 Q6 78 6 88 Q5 96 8 102 L13 98 Q12 90 12 82 Q14 70 16 60 Q18 50 20 44" stroke={O} />
-      {/* Right arm */}
-      <path d="M81 42 Q86 54 90 66 Q94 78 94 88 Q95 96 92 102 L87 98 Q88 90 88 82 Q86 70 84 60 Q82 50 80 44" stroke={O} />
-      {/* Elbow hints */}
-      <ellipse cx="11" cy="67" rx="2.5" ry="3" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      <ellipse cx="89" cy="67" rx="2.5" ry="3" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-
-      {/* Left leg */}
-      <path d="M40 93 Q38 110 37 126 Q36 140 35 152 Q34 164 33 176 L30 188 L38 188 Q38 176 38 164 Q39 152 39 140 Q40 128 41 118 Q42 106 46 93" stroke={O} />
-      {/* Right leg */}
-      <path d="M54 93 Q58 106 59 118 Q60 128 61 140 Q61 152 62 164 Q62 176 62 188 L70 188 Q67 176 66 164 Q66 152 65 140 Q64 128 63 126 Q62 110 60 93" stroke={O} />
-      {/* Kneecap hints */}
-      <ellipse cx="37.5" cy="130" rx="3.5" ry="4.5" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      <ellipse cx="62.5" cy="130" rx="3.5" ry="4.5" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      {/* Ankle hints */}
-      <circle cx="34" cy="178" r="1.8" stroke={G} strokeWidth={GW} />
-      <circle cx="66" cy="178" r="1.8" stroke={G} strokeWidth={GW} />
+    <svg viewBox="0 0 100 200" className="w-full h-full" fill="none">
+      <MaleSilhouette />
+      <FrontGuides isMale />
     </svg>
   );
 }
 
-/* ── Male Back ── */
-
 export function MaleBackSVG() {
   return (
-    <svg viewBox="0 0 100 200" className="w-full h-full" fill="none" strokeWidth={SW}>
-      {/* Head */}
-      <ellipse cx="50" cy="16" rx="9.5" ry="11.5" stroke={O} />
-
-      {/* Neck (thicker) */}
-      <line x1="43" y1="27" x2="42" y2="35" stroke={O} />
-      <line x1="57" y1="27" x2="58" y2="35" stroke={O} />
-
-      {/* Torso */}
-      <path
-        d="M22 38 Q19 38 17 44 Q20 50 28 52 L32 60 Q31 68 30 76 L31 83 Q33 90 40 93 L46 93 Q50 95 54 93 L60 93 Q67 90 69 83 L70 76 Q69 68 68 60 L72 52 Q80 50 83 44 Q81 38 78 38 Z"
-        stroke={O}
-      />
-      {/* Spine */}
-      <line x1="50" y1="28" x2="50" y2="93" stroke={G} strokeWidth="0.6" />
-      {/* Scapulae */}
-      <path d="M36 42 Q40 48 46 44" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      <path d="M64 42 Q60 48 54 44" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      {/* Mid-back line */}
-      <path d="M32 56 Q42 58 50 57 Q58 58 68 56" stroke={G} strokeWidth={GW} strokeDasharray={DASH} />
-      {/* Lower-back line */}
-      <path d="M32 70 Q41 72 50 71 Q59 72 68 70" stroke={G} strokeWidth={GW} strokeDasharray={DASH} />
-      {/* Glute line */}
-      <path d="M38 84 Q44 90 50 87 Q56 90 62 84" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-
-      {/* Left arm */}
-      <path d="M19 42 Q14 54 10 66 Q6 78 6 88 Q5 96 8 102 L13 98 Q12 90 12 82 Q14 70 16 60 Q18 50 20 44" stroke={O} />
-      {/* Right arm */}
-      <path d="M81 42 Q86 54 90 66 Q94 78 94 88 Q95 96 92 102 L87 98 Q88 90 88 82 Q86 70 84 60 Q82 50 80 44" stroke={O} />
-      {/* Elbow hints */}
-      <ellipse cx="11" cy="67" rx="2.5" ry="3" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-      <ellipse cx="89" cy="67" rx="2.5" ry="3" stroke={G} strokeWidth={GW} strokeDasharray="1 1" />
-
-      {/* Left leg */}
-      <path d="M40 93 Q38 110 37 126 Q36 140 35 152 Q34 164 33 176 L30 188 L38 188 Q38 176 38 164 Q39 152 39 140 Q40 128 41 118 Q42 106 46 93" stroke={O} />
-      {/* Right leg */}
-      <path d="M54 93 Q58 106 59 118 Q60 128 61 140 Q61 152 62 164 Q62 176 62 188 L70 188 Q67 176 66 164 Q66 152 65 140 Q64 128 63 126 Q62 110 60 93" stroke={O} />
-      {/* Knee crease */}
-      <path d="M34 130 Q37.5 133 41 130" stroke={G} strokeWidth={GW} />
-      <path d="M59 130 Q62.5 133 66 130" stroke={G} strokeWidth={GW} />
-      {/* Ankle hints */}
-      <circle cx="34" cy="178" r="1.8" stroke={G} strokeWidth={GW} />
-      <circle cx="66" cy="178" r="1.8" stroke={G} strokeWidth={GW} />
-      {/* Achilles */}
-      <line x1="34.5" y1="160" x2="34" y2="176" stroke={G} strokeWidth={GW} strokeDasharray="1 1.5" />
-      <line x1="65.5" y1="160" x2="66" y2="176" stroke={G} strokeWidth={GW} strokeDasharray="1 1.5" />
+    <svg viewBox="0 0 100 200" className="w-full h-full" fill="none">
+      <MaleSilhouette />
+      <BackGuides isMale />
     </svg>
   );
 }

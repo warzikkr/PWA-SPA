@@ -7,7 +7,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UnifiedBodyMap } from '../../../components/bodymap/UnifiedBodyMap';
-import type { BodyZoneSelection } from '../../../types';
+import { useKioskStore } from '../../../stores/kioskStore';
+import type { BodyGender, BodyZoneSelection } from '../../../types';
 
 interface Props {
   defaultValues: Record<string, unknown>;
@@ -17,6 +18,8 @@ interface Props {
 
 export function BodyMapStep({ defaultValues, onSubmit, onBack }: Props) {
   const { t } = useTranslation();
+  const storeGender = useKioskStore((s) => s.gender);
+  const gender: BodyGender = storeGender === 'male' ? 'male' : 'female';
 
   const [focusZones, setFocusZones] = useState<BodyZoneSelection[]>(
     (defaultValues.focus_zones as BodyZoneSelection[]) ?? [],
@@ -48,6 +51,7 @@ export function BodyMapStep({ defaultValues, onSubmit, onBack }: Props) {
           focusZones={focusZones}
           avoidZones={avoidZones}
           onChange={setFocusZones}
+          gender={gender}
         />
       </div>
 
@@ -65,6 +69,7 @@ export function BodyMapStep({ defaultValues, onSubmit, onBack }: Props) {
           focusZones={focusZones}
           avoidZones={avoidZones}
           onChange={setAvoidZones}
+          gender={gender}
         />
       </div>
 
