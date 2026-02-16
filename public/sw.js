@@ -4,7 +4,7 @@
  *
  * Bump CACHE_VERSION on every deploy to invalidate stale caches.
  */
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const CACHE_NAME = `spa-salon-v${CACHE_VERSION}`;
 
 self.addEventListener('install', () => {

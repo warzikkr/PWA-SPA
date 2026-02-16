@@ -51,6 +51,8 @@ export function ContactsPage() {
   const [suggestions, setSuggestions] = useState<Client[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -86,7 +88,6 @@ export function ContactsPage() {
 
   const handleNameChange = useCallback(
     (value: string) => {
-      // Clear previous selection if user edits the name
       if (selectedClient && value !== selectedClient.fullName) {
         setSelectedClient(null);
       }
@@ -104,7 +105,8 @@ export function ContactsPage() {
           const results = await clientService.searchByName(value.trim());
           setSuggestions(results);
           setShowSuggestions(results.length > 0);
-        } catch {
+        } catch (err) {
+          console.error('[ContactsPage] searchByName failed:', err);
           setSuggestions([]);
           setShowSuggestions(false);
         }
@@ -118,7 +120,6 @@ export function ContactsPage() {
     setSuggestions([]);
     setShowSuggestions(false);
 
-    // Fill form fields from existing client
     setValue('fullName', client.fullName, { shouldValidate: true });
     if (client.gender === 'male' || client.gender === 'female') {
       setValue('gender', client.gender, { shouldValidate: true });
@@ -131,7 +132,6 @@ export function ContactsPage() {
     }
   };
 
-  /** Apply saved preferences to kiosk formData */
   const applyPreferences = (client: Client) => {
     if (!client.preferences) return;
     const prefs = client.preferences;
@@ -151,41 +151,48 @@ export function ContactsPage() {
   };
 
   const onSubmit = async (data: FormData) => {
-    let client: Client;
+    setSubmitting(true);
+    setSubmitError('');
 
-    if (selectedClient) {
-      // Returning client — update name/gender if changed, reuse existing record
-      client = selectedClient;
-      if (data.fullName !== client.fullName || data.gender !== client.gender) {
-        await useClientStore.getState().updateClient(client.id, {
+    try {
+      let client: Client;
+
+      if (selectedClient) {
+        client = selectedClient;
+        if (data.fullName !== client.fullName || data.gender !== client.gender) {
+          await useClientStore.getState().updateClient(client.id, {
+            fullName: data.fullName,
+            gender: data.gender,
+          });
+          client = { ...client, fullName: data.fullName, gender: data.gender };
+        }
+      } else {
+        client = await findOrCreate({
           fullName: data.fullName,
+          email: '',
+          contactMethod: data.contactMethod,
+          contactValue: data.contactValue,
+          marketingSource: '',
+          consentPromotions: false,
+          consentPrivacy: true,
           gender: data.gender,
+          tags: [],
         });
-        client = { ...client, fullName: data.fullName, gender: data.gender };
       }
-    } else {
-      // New or matched by contact — use existing findOrCreate
-      client = await findOrCreate({
-        fullName: data.fullName,
-        email: '',
-        contactMethod: data.contactMethod,
-        contactValue: data.contactValue,
-        marketingSource: '',
-        consentPromotions: false,
-        consentPrivacy: true,
-        gender: data.gender,
-        tags: [],
-      });
-    }
 
-    setClientId(client.id);
-    setGender(data.gender);
-    applyPreferences(client);
-    updateFormData({ gender: data.gender });
-    navigate('/kiosk/intake');
+      setClientId(client.id);
+      setGender(data.gender);
+      applyPreferences(client);
+      updateFormData({ gender: data.gender });
+      navigate('/kiosk/intake');
+    } catch (err) {
+      console.error('[ContactsPage] Submit failed:', err);
+      setSubmitError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  // Register fullName manually to intercept onChange for autocomplete
   const { ref: nameRef, ...nameRest } = register('fullName');
 
   return (
@@ -306,14 +313,20 @@ export function ContactsPage() {
           error={errors.contactValue?.message}
         />
 
+        {/* Error display */}
+        {submitError && (
+          <p className="text-sm text-red-600 text-center bg-red-50 rounded-lg p-3">{submitError}</p>
+        )}
+
         {/* Fixed bottom button */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-brand-border">
           <div className="max-w-md mx-auto">
             <button
               type="submit"
-              className="w-full min-h-[56px] rounded-xl bg-brand-dark text-white font-medium text-lg active:scale-[0.98] transition-transform"
+              disabled={submitting}
+              className="w-full min-h-[56px] rounded-xl bg-brand-dark text-white font-medium text-lg active:scale-[0.98] transition-transform disabled:opacity-50"
             >
-              {t('common.continue')}
+              {submitting ? 'Saving...' : t('common.continue')}
             </button>
           </div>
         </div>
