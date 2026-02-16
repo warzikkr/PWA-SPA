@@ -52,7 +52,13 @@
     "contactValueRequired": "Contact value is required",
     "emailRequired": "Valid email required",
     "sourceRequired": "Please select",
-    "privacyRequired": "You must agree to the privacy policy"
+    "privacyRequired": "You must agree to the privacy policy",
+    "enterName": "Your name...",
+    "findBookingHintName": "Enter your name to find your booking",
+    "todayBookings": "Today's bookings",
+    "male": "Male",
+    "female": "Female",
+    "gender": "Gender"
   },
   "admin": {
     "today": "Today",
@@ -135,10 +141,35 @@
     "signatureRequired": "Signature required"
   },
   "statuses": {
-    "pending": "Pending",
+    "scheduled": "Scheduled",
+    "checked_in": "Checked In",
     "assigned": "Assigned",
     "in_progress": "In Progress",
-    "done": "Done"
+    "done": "Done",
+    "cancelled": "Cancelled"
+  },
+  "booking": {
+    "title": "Book a Session",
+    "selectDate": "Select a Date",
+    "selectDateHint": "Choose a date for your massage session",
+    "selectTime": "Select a Time",
+    "yourDetails": "Your Details",
+    "bookNow": "Book Now",
+    "confirmed": "Booking Confirmed!",
+    "confirmedHint": "We look forward to seeing you",
+    "name": "Name",
+    "date": "Date",
+    "time": "Time",
+    "arrivalNote": "Please arrive 5 minutes before your session. You can check in using the kiosk at the salon.",
+    "calendarHint": "Green dot = available",
+    "noSlots": "No available times for this date",
+    "lastSlot": "Last spot",
+    "fewSlots": "{{count}} left",
+    "intakeQuestion": "Would you like to fill your massage preferences now?",
+    "intakeQuestionHint": "This helps us prepare your session. You can also fill it at the salon.",
+    "fillNow": "Yes, fill now",
+    "fillAtSalon": "I will fill at the salon",
+    "online": "Online"
   },
   "config": {
     "contactMethods": "Contact Methods",

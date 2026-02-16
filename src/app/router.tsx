@@ -8,6 +8,9 @@ import { ProtectedRoute } from '../shared/components/ProtectedRoute';
 // Auth
 import { LoginPage } from '../features/auth/pages/LoginPage';
 
+// Public booking page
+import { BookingPage } from '../features/booking/pages/BookingPage';
+
 // Kiosk pages
 import { WelcomePage } from '../features/kiosk/pages/WelcomePage';
 import { FindBookingPage } from '../features/kiosk/pages/FindBookingPage';
@@ -41,6 +44,11 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  // Public booking — no auth required
+  {
+    path: '/book',
+    element: <BookingPage />,
   },
   // Kiosk — no auth required
   {

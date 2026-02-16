@@ -68,7 +68,7 @@ export async function submitKioskIntake({
   if (isWalkin && clientId && !bookingId) {
     const booking = await addBooking({
       clientId,
-      status: 'pending',
+      status: 'scheduled',
       date: new Date().toISOString().split('T')[0],
       paymentStatus: 'unpaid',
       source: 'walkin',

@@ -135,10 +135,35 @@
     "signatureRequired": "署名が必要です"
   },
   "statuses": {
-    "pending": "保留中",
-    "assigned": "割り当て済み",
-    "in_progress": "進行中",
-    "done": "完了"
+    "scheduled": "予約済み",
+    "checked_in": "チェックイン済み",
+    "assigned": "担当決定",
+    "in_progress": "施術中",
+    "done": "完了",
+    "cancelled": "キャンセル"
+  },
+  "booking": {
+    "title": "セッション予約",
+    "selectDate": "日付を選択",
+    "selectDateHint": "マッサージセッションの日付を選択してください",
+    "selectTime": "時間を選択",
+    "yourDetails": "お客様情報",
+    "bookNow": "予約する",
+    "confirmed": "予約確定！",
+    "confirmedHint": "お待ちしております",
+    "name": "お名前",
+    "date": "日付",
+    "time": "時間",
+    "arrivalNote": "セッションの5分前にお越しください。サロンのキオスクでチェックインできます。",
+    "calendarHint": "緑の点 = 空きあり",
+    "noSlots": "この日は空きがありません",
+    "lastSlot": "残り1枠",
+    "fewSlots": "残り{{count}}枠",
+    "intakeQuestion": "マッサージの希望を今入力しますか？",
+    "intakeQuestionHint": "セッションの準備に役立ちます。サロンでも入力できます。",
+    "fillNow": "はい、今入力する",
+    "fillAtSalon": "サロンで入力する",
+    "online": "オンライン"
   },
   "config": {
     "contactMethods": "連絡方法",

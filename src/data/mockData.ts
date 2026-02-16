@@ -61,7 +61,7 @@ export const mockBookings: Booking[] = [
     clientId: 'cl_2',
     therapistId: 'th_2',
     roomId: 'room_2',
-    status: 'pending',
+    status: 'scheduled',
     date: today,
     startTime: '11:30',
     endTime: '13:00',
@@ -72,7 +72,7 @@ export const mockBookings: Booking[] = [
   {
     id: 'bk_3',
     clientId: 'cl_3',
-    status: 'pending',
+    status: 'scheduled',
     date: today,
     paymentStatus: 'unpaid',
     createdAt: '2026-02-14T09:00:00Z',

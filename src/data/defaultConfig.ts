@@ -2,6 +2,8 @@ import type { AppConfig } from '../types/config';
 
 export const defaultConfig: AppConfig = {
   inactivityTimeout: 120,
+  slotDurationMinutes: 60,
+  bookingBufferMinutes: 15,
 
   languages: [
     { id: 'en', label: 'English', enabled: true },
@@ -31,10 +33,12 @@ export const defaultConfig: AppConfig = {
   ],
 
   statuses: [
-    { id: 'pending', label: 'Pending', enabled: true },
+    { id: 'scheduled', label: 'Scheduled', enabled: true },
+    { id: 'checked_in', label: 'Checked In', enabled: true },
     { id: 'assigned', label: 'Assigned', enabled: true },
     { id: 'in_progress', label: 'In Progress', enabled: true },
     { id: 'done', label: 'Done', enabled: true },
+    { id: 'cancelled', label: 'Cancelled', enabled: true },
   ],
 
   tags: [
@@ -53,9 +57,37 @@ export const defaultConfig: AppConfig = {
   ],
 
   therapists: [
-    { id: 'th_1', label: 'Anna K.', enabled: true },
-    { id: 'th_2', label: 'Maria S.', enabled: true },
-    { id: 'th_3', label: 'Elena V.', enabled: true },
+    {
+      id: 'th_1', label: 'Anna K.', enabled: true,
+      schedule: [
+        { dayOfWeek: 1, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 2, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 3, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 4, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 5, startTime: '10:00', endTime: '18:00' },
+      ],
+    },
+    {
+      id: 'th_2', label: 'Maria S.', enabled: true,
+      schedule: [
+        { dayOfWeek: 1, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 2, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 3, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 5, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 6, startTime: '10:00', endTime: '16:00' },
+      ],
+    },
+    {
+      id: 'th_3', label: 'Elena V.', enabled: true,
+      schedule: [
+        { dayOfWeek: 2, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 3, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 4, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 5, startTime: '10:00', endTime: '18:00' },
+        { dayOfWeek: 6, startTime: '10:00', endTime: '16:00' },
+        { dayOfWeek: 0, startTime: '11:00', endTime: '17:00' },
+      ],
+    },
   ],
 
   musicPresets: [

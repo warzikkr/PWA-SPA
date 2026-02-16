@@ -9,10 +9,12 @@ import { Badge, Button, Input, Select } from '../../../shared/components';
 import type { Booking } from '../../../types';
 
 const statusVariant: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
-  pending: 'warning',
+  scheduled: 'warning',
+  checked_in: 'info',
   assigned: 'info',
   in_progress: 'success',
   done: 'default',
+  cancelled: 'danger',
 };
 
 const POLL_INTERVAL = 15_000;
@@ -88,12 +90,12 @@ export function ReceptionDashboardPage() {
   };
 
   const handleAssignTherapist = async (bookingId: string, therapistId: string) => {
-    await updateBooking(bookingId, { therapistId, status: therapistId ? 'assigned' : 'pending' });
+    await updateBooking(bookingId, { therapistId, status: therapistId ? 'assigned' : 'scheduled' });
   };
 
   const handleCreateWalkin = async () => {
     await addBooking({
-      status: 'pending',
+      status: 'scheduled',
       date: today,
       paymentStatus: 'unpaid',
       source: 'walkin',
@@ -110,8 +112,8 @@ export function ReceptionDashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {['pending', 'assigned', 'in_progress', 'done'].map((status) => {
+      <div className="grid grid-cols-5 gap-4 mb-6">
+        {['scheduled', 'checked_in', 'assigned', 'in_progress', 'done'].map((status) => {
           const count = todayBookings.filter((b) => b.status === status).length;
           return (
             <div key={status} className="bg-white rounded-xl border border-brand-border p-4">

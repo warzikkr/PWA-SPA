@@ -52,7 +52,13 @@
     "contactValueRequired": "联系信息为必填项",
     "emailRequired": "需要有效的邮箱地址",
     "sourceRequired": "请选择",
-    "privacyRequired": "您必须同意隐私政策"
+    "privacyRequired": "您必须同意隐私政策",
+    "enterName": "您的姓名...",
+    "findBookingHintName": "输入姓名查找预约",
+    "todayBookings": "今日预约",
+    "male": "男",
+    "female": "女",
+    "gender": "性别"
   },
   "admin": {
     "today": "今日",
@@ -135,10 +141,35 @@
     "signatureRequired": "需要签名"
   },
   "statuses": {
-    "pending": "待处理",
+    "scheduled": "已预约",
+    "checked_in": "已签到",
     "assigned": "已分配",
     "in_progress": "进行中",
-    "done": "已完成"
+    "done": "已完成",
+    "cancelled": "已取消"
+  },
+  "booking": {
+    "title": "预约疗程",
+    "selectDate": "选择日期",
+    "selectDateHint": "选择按摩疗程的日期",
+    "selectTime": "选择时间",
+    "yourDetails": "您的信息",
+    "bookNow": "立即预约",
+    "confirmed": "预约已确认！",
+    "confirmedHint": "期待您的到来",
+    "name": "姓名",
+    "date": "日期",
+    "time": "时间",
+    "arrivalNote": "请在疗程前5分钟到达。您可以在沙龙的自助服务台签到。",
+    "calendarHint": "绿点 = 可预约",
+    "noSlots": "该日期没有可用时间",
+    "lastSlot": "最后一个名额",
+    "fewSlots": "剩余{{count}}个",
+    "intakeQuestion": "您想现在填写按摩偏好吗？",
+    "intakeQuestionHint": "这有助于我们准备您的疗程。您也可以在沙龙填写。",
+    "fillNow": "是的，现在填写",
+    "fillAtSalon": "我将在沙龙填写",
+    "online": "在线"
   },
   "config": {
     "contactMethods": "联系方式",

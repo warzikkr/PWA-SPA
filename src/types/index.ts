@@ -131,7 +131,7 @@ export interface Booking {
   paymentType?: string;
   internalNote?: string;
   createdAt: string;
-  source: 'booking' | 'walkin';
+  source: 'booking' | 'walkin' | 'online';
 }
 
 export interface Intake {

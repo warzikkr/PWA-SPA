@@ -129,6 +129,24 @@ export const bookingService = {
     return data ? rowToBooking(data as BookingRow) : undefined;
   },
 
+  async searchTodayByName(query: string): Promise<(Booking & { clientName: string })[]> {
+    const q = query.trim();
+    if (q.length < 2) return [];
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('*, clients!inner(full_name)')
+      .eq('date', today)
+      .in('status', ['scheduled', 'assigned'])
+      .ilike('clients.full_name', `%${q}%`)
+      .order('start_time');
+    if (error) throw new Error(`bookingService.searchTodayByName: ${error.message}`);
+    return ((data ?? []) as (BookingRow & { clients: { full_name: string } })[]).map((r) => ({
+      ...rowToBooking(r),
+      clientName: r.clients.full_name,
+    }));
+  },
+
   async getByTherapistToday(therapistId: string): Promise<Booking[]> {
     const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase

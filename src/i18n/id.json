@@ -52,7 +52,13 @@
     "contactValueRequired": "Nilai kontak wajib diisi",
     "emailRequired": "Email valid diperlukan",
     "sourceRequired": "Silakan pilih",
-    "privacyRequired": "Anda harus menyetujui kebijakan privasi"
+    "privacyRequired": "Anda harus menyetujui kebijakan privasi",
+    "enterName": "Nama Anda...",
+    "findBookingHintName": "Masukkan nama Anda untuk menemukan pemesanan",
+    "todayBookings": "Pemesanan hari ini",
+    "male": "Pria",
+    "female": "Wanita",
+    "gender": "Jenis Kelamin"
   },
   "admin": {
     "today": "Hari Ini",
@@ -135,10 +141,35 @@
     "signatureRequired": "Tanda tangan diperlukan"
   },
   "statuses": {
-    "pending": "Menunggu",
+    "scheduled": "Terjadwal",
+    "checked_in": "Check-in",
     "assigned": "Ditugaskan",
-    "in_progress": "Sedang Berjalan",
-    "done": "Selesai"
+    "in_progress": "Berlangsung",
+    "done": "Selesai",
+    "cancelled": "Dibatalkan"
+  },
+  "booking": {
+    "title": "Pesan Sesi",
+    "selectDate": "Pilih Tanggal",
+    "selectDateHint": "Pilih tanggal untuk sesi pijat Anda",
+    "selectTime": "Pilih Waktu",
+    "yourDetails": "Data Anda",
+    "bookNow": "Pesan Sekarang",
+    "confirmed": "Pemesanan Dikonfirmasi!",
+    "confirmedHint": "Kami menunggu kedatangan Anda",
+    "name": "Nama",
+    "date": "Tanggal",
+    "time": "Waktu",
+    "arrivalNote": "Silakan datang 5 menit sebelum sesi Anda. Anda dapat check-in di kios salon.",
+    "calendarHint": "Titik hijau = tersedia",
+    "noSlots": "Tidak ada waktu tersedia untuk tanggal ini",
+    "lastSlot": "Tempat terakhir",
+    "fewSlots": "{{count}} tersisa",
+    "intakeQuestion": "Apakah Anda ingin mengisi preferensi pijat sekarang?",
+    "intakeQuestionHint": "Ini membantu kami mempersiapkan sesi Anda. Anda juga dapat mengisi di salon.",
+    "fillNow": "Ya, isi sekarang",
+    "fillAtSalon": "Saya akan isi di salon",
+    "online": "Online"
   },
   "config": {
     "contactMethods": "Metode Kontak",

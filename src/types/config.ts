@@ -59,6 +59,17 @@ export interface ConfigOption {
   enabled: boolean;
 }
 
+/* ── Therapist schedule ── */
+export interface TherapistScheduleSlot {
+  dayOfWeek: number; // 0=Sunday … 6=Saturday
+  startTime: string; // "10:00"
+  endTime: string;   // "18:00"
+}
+
+export interface TherapistConfigOption extends ConfigOption {
+  schedule?: TherapistScheduleSlot[];
+}
+
 export interface AppConfig {
   intakeSchema: StepDefinition[];
   contactMethods: ConfigOption[];
@@ -66,12 +77,14 @@ export interface AppConfig {
   statuses: ConfigOption[];
   tags: ConfigOption[];
   rooms: ConfigOption[];
-  therapists: ConfigOption[];
+  therapists: TherapistConfigOption[];
   musicPresets: ConfigOption[];
   oilOptions: ConfigOption[];
   bodyZones: ConfigOption[];
   languages: ConfigOption[];
   inactivityTimeout: number;
+  slotDurationMinutes: number;
+  bookingBufferMinutes: number;
 }
 
 /* ── Localization helper ── */

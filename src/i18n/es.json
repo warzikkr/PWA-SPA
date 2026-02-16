@@ -52,7 +52,13 @@
     "contactValueRequired": "El valor de contacto es obligatorio",
     "emailRequired": "Se requiere un email válido",
     "sourceRequired": "Por favor seleccione",
-    "privacyRequired": "Debe aceptar la política de privacidad"
+    "privacyRequired": "Debe aceptar la política de privacidad",
+    "enterName": "Tu nombre...",
+    "findBookingHintName": "Ingresa tu nombre para encontrar tu reserva",
+    "todayBookings": "Reservas de hoy",
+    "male": "Masculino",
+    "female": "Femenino",
+    "gender": "Género"
   },
   "admin": {
     "today": "Hoy",
@@ -135,10 +141,35 @@
     "signatureRequired": "Firma requerida"
   },
   "statuses": {
-    "pending": "Pendiente",
+    "scheduled": "Programado",
+    "checked_in": "Registrado",
     "assigned": "Asignado",
     "in_progress": "En Progreso",
-    "done": "Hecho"
+    "done": "Completado",
+    "cancelled": "Cancelado"
+  },
+  "booking": {
+    "title": "Reservar Sesión",
+    "selectDate": "Selecciona una Fecha",
+    "selectDateHint": "Elige una fecha para tu sesión de masaje",
+    "selectTime": "Selecciona un Horario",
+    "yourDetails": "Tus Datos",
+    "bookNow": "Reservar Ahora",
+    "confirmed": "¡Reserva Confirmada!",
+    "confirmedHint": "Te esperamos",
+    "name": "Nombre",
+    "date": "Fecha",
+    "time": "Hora",
+    "arrivalNote": "Por favor llega 5 minutos antes de tu sesión. Puedes registrarte en el kiosco del salón.",
+    "calendarHint": "Punto verde = disponible",
+    "noSlots": "No hay horarios disponibles para esta fecha",
+    "lastSlot": "Último lugar",
+    "fewSlots": "{{count}} restantes",
+    "intakeQuestion": "¿Te gustaría completar tus preferencias de masaje ahora?",
+    "intakeQuestionHint": "Esto nos ayuda a preparar tu sesión. También puedes completarlo en el salón.",
+    "fillNow": "Sí, completar ahora",
+    "fillAtSalon": "Lo completaré en el salón",
+    "online": "En línea"
   },
   "config": {
     "contactMethods": "Métodos de Contacto",
