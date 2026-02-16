@@ -29,6 +29,9 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
+  // Only handle http/https — skip chrome-extension:// and other schemes
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
   // Navigation requests (HTML pages) — always network-first
   if (request.mode === 'navigate') {
     event.respondWith(
