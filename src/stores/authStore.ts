@@ -16,12 +16,15 @@ interface AuthState {
 async function fetchAppUser(authUid: string, retries = 2): Promise<User | undefined> {
   for (let i = 0; i <= retries; i++) {
     try {
-      return await userService.getByAuthUid(authUid);
+      const user = await userService.getByAuthUid(authUid);
+      if (i > 0) console.info(`[Auth] getByAuthUid succeeded on attempt ${i + 1}`);
+      return user;
     } catch (err) {
-      console.warn(`[Auth] getByAuthUid attempt ${i + 1} failed:`, err);
+      console.warn(`[Auth] getByAuthUid attempt ${i + 1}/${retries + 1} failed:`, err);
       if (i < retries) await new Promise((r) => setTimeout(r, 800 * (i + 1)));
     }
   }
+  console.error('[Auth] getByAuthUid exhausted all retries');
   return undefined;
 }
 
@@ -80,18 +83,23 @@ setTimeout(() => {
  * INITIAL_SESSION fires once on startup with the restored session.
  */
 supabase.auth.onAuthStateChange(async (event, session) => {
+  console.info(`[Auth] onAuthStateChange: event=${event}, hasSession=${!!session}, hasUser=${!!session?.user}`);
   try {
     if (event === 'INITIAL_SESSION') {
       if (!session?.user) {
+        console.info('[Auth] INITIAL_SESSION: no session — going to login');
         useAuthStore.setState({ currentUser: null, loading: false });
         return;
       }
+      console.info('[Auth] INITIAL_SESSION: restoring user profile…');
       const appUser = await fetchAppUser(session.user.id);
+      console.info(`[Auth] INITIAL_SESSION: profile ${appUser ? 'found' : 'NOT found'}`);
       useAuthStore.setState({ currentUser: appUser ?? null, loading: false });
       return;
     }
 
     if (event === 'SIGNED_OUT') {
+      console.info('[Auth] SIGNED_OUT');
       useAuthStore.setState({ currentUser: null });
     }
 
