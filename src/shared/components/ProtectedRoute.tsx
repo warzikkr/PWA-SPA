@@ -6,17 +6,24 @@ interface Props {
   allowedRoles: UserRole[];
 }
 
+function AuthSpinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+    </div>
+  );
+}
+
 /**
  * Route guard — renders child routes only when the current user
- * is authenticated via Supabase and has one of the allowed roles.
- * Shows nothing while session is being restored. Redirects to /login otherwise.
+ * is authenticated and has one of the allowed roles.
+ * Shows spinner while session is being restored.
  */
 export function ProtectedRoute({ allowedRoles }: Props) {
   const currentUser = useAuthStore((s) => s.currentUser);
   const loading = useAuthStore((s) => s.loading);
 
-  // Still restoring Supabase session — render nothing (or a spinner)
-  if (loading) return null;
+  if (loading) return <AuthSpinner />;
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;

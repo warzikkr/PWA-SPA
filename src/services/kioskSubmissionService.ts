@@ -2,10 +2,8 @@
  * kioskSubmissionService — Centralized, atomic kiosk submission.
  *
  * Orchestrates: client → booking → intake → back-links → preferences → visit history.
- * All steps run sequentially with error handling. If any step fails, throws
- * so the caller can handle (show error / retry).
- *
- * Uses Zustand store methods which delegate to Supabase service layer.
+ * All steps run sequentially with error handling. If any critical step fails,
+ * throws so the caller can handle (show error / retry).
  */
 import type { ClientPreferences } from '../types';
 import { useBookingStore } from '../stores/bookingStore';
@@ -52,7 +50,7 @@ function extractPreferences(data: Record<string, unknown>): ClientPreferences {
 
 /**
  * Submit kiosk intake atomically.
- * Throws on failure — caller should catch and display error.
+ * Throws on failure — caller must catch and display error.
  */
 export async function submitKioskIntake({
   clientId,
@@ -93,10 +91,18 @@ export async function submitKioskIntake({
   // Step 3: Back-link intake to booking
   await updateBooking(finalBookingId, { intakeId: intake.id });
 
-  // Step 4: Persist client preferences + visit history
+  // Step 4: Persist client preferences + visit history (non-critical — don't fail submission)
   if (clientId) {
-    await updatePreferences(clientId, extractPreferences(formData));
-    await addVisit(clientId, finalBookingId);
+    try {
+      await updatePreferences(clientId, extractPreferences(formData));
+    } catch (err) {
+      console.warn('[KioskSubmission] Failed to update preferences (non-critical):', err);
+    }
+    try {
+      await addVisit(clientId, finalBookingId);
+    } catch (err) {
+      console.warn('[KioskSubmission] Failed to add visit history (non-critical):', err);
+    }
   }
 
   return {

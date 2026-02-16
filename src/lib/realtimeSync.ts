@@ -3,8 +3,9 @@
  *
  * Listens for postgres_changes on key tables and reloads the
  * corresponding Zustand store so all connected clients see updates
- * within seconds — replaces the old StorageEvent cross-tab sync.
+ * within seconds.
  */
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './supabaseClient';
 import { useBookingStore } from '../stores/bookingStore';
 import { useClientStore } from '../stores/clientStore';
@@ -12,34 +13,38 @@ import { useIntakeStore } from '../stores/intakeStore';
 import { useTherapistNoteStore } from '../stores/therapistNoteStore';
 import { useChangeRequestStore } from '../stores/changeRequestStore';
 
-let subscribed = false;
+let channel: RealtimeChannel | null = null;
 
 export function subscribeRealtime() {
-  if (subscribed) return;
-  subscribed = true;
+  if (channel) return;
 
-  supabase
+  channel = supabase
     .channel('db-sync')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
-      useBookingStore.getState().loadBookings();
+      useBookingStore.getState().loadBookings().catch(console.error);
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => {
-      useClientStore.getState().loadClients();
+      useClientStore.getState().loadClients().catch(console.error);
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'intakes' }, () => {
-      useIntakeStore.getState().loadIntakes();
+      useIntakeStore.getState().loadIntakes().catch(console.error);
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'therapist_notes' }, () => {
-      useTherapistNoteStore.getState().loadNotes();
+      useTherapistNoteStore.getState().loadNotes().catch(console.error);
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'change_requests' }, () => {
-      useChangeRequestStore.getState().loadRequests();
+      useChangeRequestStore.getState().loadRequests().catch(console.error);
     })
-    .subscribe();
+    .subscribe((status) => {
+      if (status === 'CHANNEL_ERROR') {
+        console.error('[Realtime] Channel error — will retry on next auth cycle');
+        channel = null;
+      }
+    });
 }
 
 export function unsubscribeRealtime() {
-  if (!subscribed) return;
-  subscribed = false;
-  supabase.removeAllChannels();
+  if (!channel) return;
+  supabase.removeChannel(channel);
+  channel = null;
 }

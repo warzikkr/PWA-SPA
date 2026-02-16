@@ -10,7 +10,7 @@ import { useUserStore } from '../stores/userStore';
 import { useTherapistNoteStore } from '../stores/therapistNoteStore';
 import { useChangeRequestStore } from '../stores/changeRequestStore';
 import { subscribeRealtime, unsubscribeRealtime } from '../lib/realtimeSync';
-// Initialize i18n (side-effect import)
+import { ErrorBoundary } from '../shared/components';
 import '../i18n';
 
 export function App() {
@@ -25,14 +25,12 @@ export function App() {
   const loadNotes = useTherapistNoteStore((s) => s.loadNotes);
   const loadRequests = useChangeRequestStore((s) => s.loadRequests);
 
-  // Load config after auth init completes (avoids navigator lock race → AbortError)
   useEffect(() => {
     if (!loading) {
       loadConfig().catch(console.error);
     }
   }, [loading, loadConfig]);
 
-  // Load all data + realtime when authenticated
   useEffect(() => {
     if (!currentUser) return;
 
@@ -49,5 +47,9 @@ export function App() {
     return () => { unsubscribeRealtime(); };
   }, [currentUser, loadClients, loadBookings, loadIntakes, loadUsers, loadNotes, loadRequests]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  );
 }

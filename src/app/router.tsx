@@ -103,4 +103,9 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  // Catch-all — redirect unknown routes to /login
+  {
+    path: '*',
+    element: <Navigate to="/login" replace />,
+  },
 ], { basename });

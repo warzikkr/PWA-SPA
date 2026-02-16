@@ -6,9 +6,8 @@
  *   2. Focus & Avoid (body maps)
  *   3. Health & Sensitivity (medical + allergies + oil + smell)
  *   4. Atmosphere (music, volume, light) — final submit
- *
- * Data keys remain backward-compatible with existing intake model.
  */
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useKioskStore } from '../../../stores/kioskStore';
@@ -35,6 +34,8 @@ export function IntakeWizardPage() {
   const navigate = useNavigate();
   const { intakeStep, setIntakeStep, formData, updateFormData, clientId, bookingId, isWalkin } =
     useKioskStore();
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const currentStep = STEPS[intakeStep];
   const isLast = intakeStep === STEPS.length - 1;
@@ -49,6 +50,8 @@ export function IntakeWizardPage() {
     updateFormData(data);
 
     if (isLast) {
+      setSubmitting(true);
+      setSubmitError(null);
       try {
         await submitKioskIntake({
           clientId: clientId ?? '',
@@ -56,10 +59,15 @@ export function IntakeWizardPage() {
           isWalkin,
           formData: merged,
         });
+        navigate('/kiosk/thanks', { replace: true });
       } catch (err) {
         console.error('[Kiosk] Submission error:', err);
+        setSubmitError(
+          err instanceof Error ? err.message : 'Submission failed. Please try again.',
+        );
+      } finally {
+        setSubmitting(false);
       }
-      navigate('/kiosk/thanks', { replace: true });
     } else {
       setIntakeStep(intakeStep + 1);
     }
@@ -100,6 +108,26 @@ export function IntakeWizardPage() {
         <h2 className="font-serif text-2xl font-bold text-brand-dark text-center mb-6">
           {currentStep.title}
         </h2>
+
+        {submitError && (
+          <div className="max-w-md mx-auto mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <p className="text-sm text-red-700 font-medium mb-2">Submission failed</p>
+            <p className="text-xs text-red-600">{submitError}</p>
+            <button
+              onClick={() => setSubmitError(null)}
+              className="mt-2 text-xs text-red-700 underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {submitting && (
+          <div className="max-w-md mx-auto mb-4 flex items-center justify-center gap-3 p-4">
+            <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+            <span className="text-sm text-brand-muted">Submitting...</span>
+          </div>
+        )}
 
         <div className="max-w-md mx-auto">
           {renderStep()}

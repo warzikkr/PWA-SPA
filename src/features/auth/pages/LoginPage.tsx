@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../../stores/authStore';
 import { Button, Input } from '../../../shared/components';
 import type { UserRole } from '../../../types';
@@ -20,7 +20,13 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-full flex items-center justify-center bg-brand-light">
+        <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (currentUser) {
     return <Navigate to={roleRedirects[currentUser.role]} replace />;
@@ -79,12 +85,12 @@ export function LoginPage() {
           </form>
 
           <div className="mt-6 pt-4 border-t border-brand-border">
-            <a
-              href="/kiosk"
+            <Link
+              to="/kiosk"
               className="block text-center text-xs text-brand-muted hover:text-brand-dark"
             >
               Open Kiosk Mode &rarr;
-            </a>
+            </Link>
           </div>
         </div>
       </div>

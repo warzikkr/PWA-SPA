@@ -15,3 +15,4 @@ export { SignaturePad } from './SignaturePad';
 export { StepProgress } from './StepProgress';
 export { Modal } from './Modal';
 export { Badge } from './Badge';
+export { ErrorBoundary } from './ErrorBoundary';
