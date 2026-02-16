@@ -8,6 +8,8 @@ import { Button, Input } from '../../../shared/components';
 import { useKioskInactivity } from '../hooks/useKioskInactivity';
 import type { Booking } from '../../../types';
 
+const SEARCH_TIMEOUT = 10_000;
+
 export function FindBookingPage() {
   useKioskInactivity();
   const { t } = useTranslation();
@@ -18,23 +20,40 @@ export function FindBookingPage() {
   const [results, setResults] = useState<(Booking & { clientName?: string })[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSearch = async () => {
     if (!query.trim()) return;
     setLoading(true);
+    setError('');
+    setResults([]);
+    setSearched(false);
+
+    const timeout = setTimeout(() => {
+      setLoading(false);
+      setError('Search timed out. Please try again.');
+    }, SEARCH_TIMEOUT);
+
     try {
       const clients = await clientService.findByContact(query.trim());
-      const bookings: (Booking & { clientName?: string })[] = [];
       const today = new Date().toISOString().split('T')[0];
 
-      for (const client of clients) {
-        const clientBookings = await bookingService.findByClientId(client.id);
-        clientBookings
-          .filter((b) => b.date === today)
-          .forEach((b) => bookings.push({ ...b, clientName: client.fullName }));
-      }
-      setResults(bookings);
+      const allBookings = await Promise.all(
+        clients.map(async (client) => {
+          const clientBookings = await bookingService.findByClientId(client.id);
+          return clientBookings
+            .filter((b) => b.date === today)
+            .map((b) => ({ ...b, clientName: client.fullName }));
+        }),
+      );
+
+      clearTimeout(timeout);
+      setResults(allBookings.flat());
       setSearched(true);
+    } catch (err) {
+      clearTimeout(timeout);
+      console.error('[FindBooking] Search error:', err);
+      setError('Search failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -73,7 +92,11 @@ export function FindBookingPage() {
           {loading ? t('common.loading') : t('common.search')}
         </Button>
 
-        {searched && results.length === 0 && (
+        {error && (
+          <p className="text-sm text-red-600 text-center">{error}</p>
+        )}
+
+        {searched && results.length === 0 && !error && (
           <div className="text-center py-8">
             <p className="text-brand-muted mb-4">{t('kiosk.noBookingFound')}</p>
             <Button variant="outline" fullWidth onClick={continueAsWalkin}>

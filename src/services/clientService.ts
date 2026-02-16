@@ -92,6 +92,18 @@ export const clientService = {
     return (data as ClientRow[]).map(rowToClient);
   },
 
+  async searchByName(query: string): Promise<Client[]> {
+    const q = query.trim();
+    if (q.length < 2) return [];
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .ilike('full_name', `%${q}%`)
+      .limit(8);
+    if (error) throw new Error(`clientService.searchByName: ${error.message}`);
+    return (data as ClientRow[]).map(rowToClient);
+  },
+
   async create(input: Omit<Client, 'id' | 'createdAt'>): Promise<Client> {
     const row = clientToRow(input);
     delete row.updated_at; // let DB default handle it
