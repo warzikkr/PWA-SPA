@@ -48,10 +48,18 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 }));
 
+// Safety timeout — if auth never resolves, force loading=false after 10s
+const AUTH_TIMEOUT = 10_000;
+setTimeout(() => {
+  if (useAuthStore.getState().loading) {
+    console.warn('[Auth] Timed out waiting for session — forcing loading=false');
+    useAuthStore.setState({ currentUser: null, loading: false });
+  }
+}, AUTH_TIMEOUT);
+
 /**
- * Single auth listener — replaces both restoreSession() and the old
- * onAuthStateChange handler.  Using INITIAL_SESSION avoids the double
- * getSession() + navigator-lock race that caused AbortError.
+ * Single auth listener — handles all session lifecycle events.
+ * INITIAL_SESSION fires once on startup with the restored session.
  */
 supabase.auth.onAuthStateChange(async (event, session) => {
   try {
@@ -79,7 +87,6 @@ supabase.auth.onAuthStateChange(async (event, session) => {
     }
   } catch (err) {
     console.error('onAuthStateChange error:', err);
-    // Ensure loading is cleared even on error
     if (event === 'INITIAL_SESSION') {
       useAuthStore.setState({ currentUser: null, loading: false });
     }
