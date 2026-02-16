@@ -4,7 +4,7 @@
  *
  * Bump CACHE_VERSION on every deploy to invalidate stale caches.
  */
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 const CACHE_NAME = `spa-salon-v${CACHE_VERSION}`;
 
 self.addEventListener('install', () => {
@@ -31,6 +31,9 @@ self.addEventListener('fetch', (event) => {
 
   // Only handle http/https — skip chrome-extension:// and other schemes
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
+  // Never cache external API requests (Supabase, analytics, etc.)
+  if (url.origin !== self.location.origin) return;
 
   // Navigation requests (HTML pages) — always network-first
   if (request.mode === 'navigate') {
