@@ -16,6 +16,6 @@ export {
 } from '../../components/bodymap/bodyMapData';
 export type { ZonePos } from '../../components/bodymap/bodyMapData';
 
-export { FrontBodySVG, BackBodySVG } from '../../components/bodymap/BodySVG';
+export { FemaleFrontSVG as FrontBodySVG, FemaleBackSVG as BackBodySVG } from '../../components/bodymap/BodySVG';
 
 export { UnifiedBodyMap as BodyMap } from '../../components/bodymap/UnifiedBodyMap';

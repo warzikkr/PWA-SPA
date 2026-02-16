@@ -255,7 +255,7 @@ export function MaleBackSVG() {
 
 /* ── Selector helper ── */
 
-const SVG_MAP: Record<`${BodyGender}_${BodySide}`, () => JSX.Element> = {
+const SVG_MAP: Record<`${BodyGender}_${BodySide}`, () => React.JSX.Element> = {
   female_front: FemaleFrontSVG,
   female_back: FemaleBackSVG,
   male_front: MaleFrontSVG,
