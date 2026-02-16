@@ -38,7 +38,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           return response;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match('/PWA-SPA/')))
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
     );
     return;
   }
