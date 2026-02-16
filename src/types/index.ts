@@ -14,19 +14,38 @@ export interface User {
 export type BodySide = 'front' | 'back';
 export type BodyHalf = 'left' | 'right';
 export type BodyRegion =
-  | 'head'
+  /* Head */
+  | 'scalp'
+  | 'face'
+  | 'jaw'
+  /* Neck */
   | 'neck'
-  | 'shoulder'
-  | 'arm'
-  | 'lower_arm'
-  | 'hand'
+  /* Torso front */
+  | 'chest'
+  | 'abdomen'
+  /* Torso back */
   | 'upper_back'
+  | 'mid_back'
   | 'lower_back'
+  /* Arms */
+  | 'shoulder'
+  | 'upper_arm'
+  | 'elbow'
+  | 'forearm'
+  | 'hand'
+  /* Hip & glute */
+  | 'hip'
   | 'glute'
+  /* Legs */
   | 'thigh'
   | 'knee'
   | 'calf'
-  | 'foot';
+  | 'ankle'
+  | 'foot'
+  /* Legacy aliases — kept for backward compat with stored data */
+  | 'head'
+  | 'arm'
+  | 'lower_arm';
 
 export interface BodyZoneSelection {
   side: BodySide;

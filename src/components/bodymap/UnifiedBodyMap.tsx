@@ -100,7 +100,7 @@ export function UnifiedBodyMap({
 
   /* ── Sizing (identical everywhere per compact flag) ── */
 
-  const maxW = compact ? 'max-w-[200px]' : 'max-w-[260px]';
+  const maxW = compact ? 'max-w-[220px]' : 'max-w-[300px]';
 
   /* ── Zone style resolver ── */
 
@@ -180,7 +180,7 @@ export function UnifiedBodyMap({
               <div
                 key={posKey}
                 title={titleLabel(region, half)}
-                className={`absolute rounded-md text-[7px] font-semibold leading-tight flex items-center justify-center border-2 ${zoneInfo.className}`}
+                className={`absolute rounded text-[6px] font-semibold leading-none flex items-center justify-center border overflow-hidden whitespace-nowrap ${zoneInfo.className}`}
                 style={{
                   left: `${pos.x}%`,
                   top: `${pos.y / 2}%`,
@@ -202,8 +202,8 @@ export function UnifiedBodyMap({
               onClick={() => toggle(activeSide, half, region)}
               title={titleLabel(region, half)}
               className={`
-                absolute rounded-md transition-all text-[7px] font-semibold leading-tight
-                flex items-center justify-center border-2
+                absolute rounded transition-all text-[6px] font-semibold leading-none
+                flex items-center justify-center border overflow-hidden whitespace-nowrap
                 ${zoneInfo
                   ? zoneInfo.className
                   : 'bg-transparent hover:bg-gray-100/50 border-transparent hover:border-gray-300 text-transparent hover:text-gray-500'

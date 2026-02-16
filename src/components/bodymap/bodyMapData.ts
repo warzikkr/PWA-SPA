@@ -7,25 +7,38 @@ import type { BodySide, BodyHalf, BodyRegion, BodyZoneSelection } from '../../ty
 /* ── Region lists ── */
 
 export const REGIONS: BodyRegion[] = [
-  'head', 'neck', 'shoulder', 'arm', 'lower_arm', 'hand',
-  'upper_back', 'lower_back', 'glute', 'thigh', 'knee', 'calf', 'foot',
+  'scalp', 'face', 'jaw', 'neck',
+  'chest', 'abdomen',
+  'upper_back', 'mid_back', 'lower_back',
+  'shoulder', 'upper_arm', 'elbow', 'forearm', 'hand',
+  'hip', 'glute',
+  'thigh', 'knee', 'calf', 'ankle', 'foot',
 ];
 
 /** Regions that have left/right variants */
 export const BILATERAL: BodyRegion[] = [
-  'shoulder', 'arm', 'lower_arm', 'hand', 'glute', 'thigh', 'knee', 'calf', 'foot',
+  'jaw', 'chest',
+  'shoulder', 'upper_arm', 'elbow', 'forearm', 'hand',
+  'hip', 'glute',
+  'thigh', 'knee', 'calf', 'ankle', 'foot',
 ];
 
 /** Regions visible on front */
 export const FRONT_REGIONS: BodyRegion[] = [
-  'head', 'neck', 'shoulder', 'arm', 'lower_arm', 'hand',
-  'upper_back', 'lower_back', 'thigh', 'knee', 'calf', 'foot',
+  'scalp', 'face', 'jaw', 'neck',
+  'chest', 'abdomen',
+  'shoulder', 'upper_arm', 'elbow', 'forearm', 'hand',
+  'hip',
+  'thigh', 'knee', 'calf', 'ankle', 'foot',
 ];
 
 /** Regions visible on back */
 export const BACK_REGIONS: BodyRegion[] = [
-  'head', 'neck', 'shoulder', 'arm', 'lower_arm', 'hand',
-  'upper_back', 'lower_back', 'glute', 'thigh', 'knee', 'calf', 'foot',
+  'scalp', 'neck',
+  'upper_back', 'mid_back', 'lower_back',
+  'shoulder', 'upper_arm', 'elbow', 'forearm', 'hand',
+  'glute',
+  'thigh', 'knee', 'calf', 'ankle', 'foot',
 ];
 
 /* ── Hitbox positions (percentage of 100×200 viewBox) ── */
@@ -33,52 +46,111 @@ export const BACK_REGIONS: BodyRegion[] = [
 export type ZonePos = { x: number; y: number; w: number; h: number };
 
 export const FRONT_POSITIONS: Record<string, ZonePos> = {
-  head:           { x: 38, y: 2,  w: 24, h: 10 },
-  neck:           { x: 42, y: 12, w: 16, h: 4 },
-  shoulder_left:  { x: 20, y: 16, w: 18, h: 7 },
-  shoulder_right: { x: 62, y: 16, w: 18, h: 7 },
-  arm_left:       { x: 12, y: 23, w: 14, h: 14 },
-  arm_right:      { x: 74, y: 23, w: 14, h: 14 },
-  lower_arm_left: { x: 8,  y: 37, w: 14, h: 14 },
-  lower_arm_right:{ x: 78, y: 37, w: 14, h: 14 },
-  hand_left:      { x: 4,  y: 51, w: 12, h: 8 },
-  hand_right:     { x: 84, y: 51, w: 12, h: 8 },
-  upper_back:     { x: 32, y: 23, w: 36, h: 12 },
-  lower_back:     { x: 34, y: 35, w: 32, h: 10 },
-  thigh_left:     { x: 28, y: 50, w: 20, h: 18 },
-  thigh_right:    { x: 52, y: 50, w: 20, h: 18 },
-  knee_left:      { x: 30, y: 68, w: 16, h: 6 },
-  knee_right:     { x: 54, y: 68, w: 16, h: 6 },
-  calf_left:      { x: 29, y: 74, w: 16, h: 14 },
-  calf_right:     { x: 55, y: 74, w: 16, h: 14 },
-  foot_left:      { x: 28, y: 88, w: 16, h: 8 },
-  foot_right:     { x: 56, y: 88, w: 16, h: 8 },
+  /* Head */
+  scalp:            { x: 38, y: 1,  w: 24, h: 6 },
+  face:             { x: 39, y: 7,  w: 22, h: 9 },
+  jaw_left:         { x: 36, y: 15, w: 14, h: 5 },
+  jaw_right:        { x: 50, y: 15, w: 14, h: 5 },
+  /* Neck */
+  neck:             { x: 42, y: 20, w: 16, h: 6 },
+  /* Shoulders */
+  shoulder_left:    { x: 19, y: 26, w: 14, h: 7 },
+  shoulder_right:   { x: 67, y: 26, w: 14, h: 7 },
+  /* Chest (bilateral) */
+  chest_left:       { x: 33, y: 26, w: 17, h: 11 },
+  chest_right:      { x: 50, y: 26, w: 17, h: 11 },
+  /* Upper arms */
+  upper_arm_left:   { x: 12, y: 33, w: 11, h: 10 },
+  upper_arm_right:  { x: 77, y: 33, w: 11, h: 10 },
+  /* Abdomen */
+  abdomen:          { x: 35, y: 37, w: 30, h: 10 },
+  /* Elbows */
+  elbow_left:       { x: 8,  y: 43, w: 10, h: 5 },
+  elbow_right:      { x: 82, y: 43, w: 10, h: 5 },
+  /* Hip */
+  hip_left:         { x: 30, y: 47, w: 18, h: 7 },
+  hip_right:        { x: 52, y: 47, w: 18, h: 7 },
+  /* Forearms */
+  forearm_left:     { x: 5,  y: 48, w: 11, h: 10 },
+  forearm_right:    { x: 84, y: 48, w: 11, h: 10 },
+  /* Thighs */
+  thigh_left:       { x: 29, y: 54, w: 18, h: 14 },
+  thigh_right:      { x: 53, y: 54, w: 18, h: 14 },
+  /* Hands */
+  hand_left:        { x: 2,  y: 58, w: 10, h: 7 },
+  hand_right:       { x: 88, y: 58, w: 10, h: 7 },
+  /* Knees */
+  knee_left:        { x: 30, y: 68, w: 14, h: 5 },
+  knee_right:       { x: 56, y: 68, w: 14, h: 5 },
+  /* Calves */
+  calf_left:        { x: 29, y: 73, w: 14, h: 12 },
+  calf_right:       { x: 57, y: 73, w: 14, h: 12 },
+  /* Ankles */
+  ankle_left:       { x: 29, y: 85, w: 12, h: 4 },
+  ankle_right:      { x: 59, y: 85, w: 12, h: 4 },
+  /* Feet */
+  foot_left:        { x: 27, y: 89, w: 14, h: 7 },
+  foot_right:       { x: 59, y: 89, w: 14, h: 7 },
 };
 
 export const BACK_POSITIONS: Record<string, ZonePos> = {
-  head:           { x: 38, y: 2,  w: 24, h: 10 },
-  neck:           { x: 42, y: 12, w: 16, h: 4 },
-  shoulder_left:  { x: 20, y: 16, w: 18, h: 7 },
-  shoulder_right: { x: 62, y: 16, w: 18, h: 7 },
-  arm_left:       { x: 12, y: 23, w: 14, h: 14 },
-  arm_right:      { x: 74, y: 23, w: 14, h: 14 },
-  lower_arm_left: { x: 8,  y: 37, w: 14, h: 14 },
-  lower_arm_right:{ x: 78, y: 37, w: 14, h: 14 },
-  hand_left:      { x: 4,  y: 51, w: 12, h: 8 },
-  hand_right:     { x: 84, y: 51, w: 12, h: 8 },
-  upper_back:     { x: 32, y: 23, w: 36, h: 12 },
-  lower_back:     { x: 34, y: 35, w: 32, h: 10 },
-  glute_left:     { x: 30, y: 45, w: 18, h: 8 },
-  glute_right:    { x: 52, y: 45, w: 18, h: 8 },
-  thigh_left:     { x: 28, y: 53, w: 20, h: 15 },
-  thigh_right:    { x: 52, y: 53, w: 20, h: 15 },
-  knee_left:      { x: 30, y: 68, w: 16, h: 6 },
-  knee_right:     { x: 54, y: 68, w: 16, h: 6 },
-  calf_left:      { x: 29, y: 74, w: 16, h: 14 },
-  calf_right:     { x: 55, y: 74, w: 16, h: 14 },
-  foot_left:      { x: 28, y: 88, w: 16, h: 8 },
-  foot_right:     { x: 56, y: 88, w: 16, h: 8 },
+  /* Head */
+  scalp:            { x: 38, y: 1,  w: 24, h: 12 },
+  /* Neck */
+  neck:             { x: 42, y: 14, w: 16, h: 8 },
+  /* Shoulders */
+  shoulder_left:    { x: 19, y: 26, w: 14, h: 7 },
+  shoulder_right:   { x: 67, y: 26, w: 14, h: 7 },
+  /* Upper back */
+  upper_back:       { x: 33, y: 26, w: 34, h: 10 },
+  /* Upper arms */
+  upper_arm_left:   { x: 12, y: 33, w: 11, h: 10 },
+  upper_arm_right:  { x: 77, y: 33, w: 11, h: 10 },
+  /* Mid back */
+  mid_back:         { x: 34, y: 36, w: 32, h: 8 },
+  /* Elbows */
+  elbow_left:       { x: 8,  y: 43, w: 10, h: 5 },
+  elbow_right:      { x: 82, y: 43, w: 10, h: 5 },
+  /* Lower back */
+  lower_back:       { x: 35, y: 44, w: 30, h: 6 },
+  /* Forearms */
+  forearm_left:     { x: 5,  y: 48, w: 11, h: 10 },
+  forearm_right:    { x: 84, y: 48, w: 11, h: 10 },
+  /* Glutes */
+  glute_left:       { x: 31, y: 50, w: 17, h: 8 },
+  glute_right:      { x: 52, y: 50, w: 17, h: 8 },
+  /* Thighs */
+  thigh_left:       { x: 28, y: 58, w: 18, h: 11 },
+  thigh_right:      { x: 54, y: 58, w: 18, h: 11 },
+  /* Hands */
+  hand_left:        { x: 2,  y: 58, w: 10, h: 7 },
+  hand_right:       { x: 88, y: 58, w: 10, h: 7 },
+  /* Knees */
+  knee_left:        { x: 30, y: 69, w: 14, h: 5 },
+  knee_right:       { x: 56, y: 69, w: 14, h: 5 },
+  /* Calves */
+  calf_left:        { x: 29, y: 74, w: 14, h: 12 },
+  calf_right:       { x: 57, y: 74, w: 14, h: 12 },
+  /* Ankles */
+  ankle_left:       { x: 29, y: 86, w: 12, h: 4 },
+  ankle_right:      { x: 59, y: 86, w: 12, h: 4 },
+  /* Feet */
+  foot_left:        { x: 28, y: 90, w: 14, h: 7 },
+  foot_right:       { x: 58, y: 90, w: 14, h: 7 },
 };
+
+/* ── Legacy region name mapping ── */
+
+const LEGACY_MAP: Record<string, BodyRegion> = {
+  head: 'scalp',
+  arm: 'upper_arm',
+  lower_arm: 'forearm',
+};
+
+/** Normalise a region name, mapping legacy values to current ones */
+export function normaliseRegion(region: string): BodyRegion {
+  return (LEGACY_MAP[region] ?? region) as BodyRegion;
+}
 
 /* ── Helpers ── */
 
@@ -107,7 +179,6 @@ export function getZoneEntries(
       entries.push({ posKey: `${region}_left`, region, half: 'left' });
       entries.push({ posKey: `${region}_right`, region, half: 'right' });
     } else {
-      // Midline zones — use "left" as canonical half (displayed as center)
       entries.push({ posKey: region, region, half: 'left' });
     }
   }

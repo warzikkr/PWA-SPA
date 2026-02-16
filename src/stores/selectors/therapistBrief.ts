@@ -1,4 +1,5 @@
 import type { Intake, BodyZoneSelection } from '../../types';
+import { normaliseRegion } from '../../components/bodymap/bodyMapData';
 
 export interface TherapistBrief {
   duration: string;
@@ -39,17 +40,18 @@ export function getTherapistBrief(intake: Intake): TherapistBrief {
 
   const asZoneArr = (v: unknown): BodyZoneSelection[] => {
     if (!Array.isArray(v)) return [];
-    // Support both new BodyZoneSelection[] and legacy string[] formats
     if (v.length === 0) return [];
     if (typeof v[0] === 'string') {
-      // Legacy: convert plain zone IDs to front/left selections
       return (v as string[]).map((region) => ({
         side: 'front' as const,
         half: 'left' as const,
-        region: region as BodyZoneSelection['region'],
+        region: normaliseRegion(region),
       }));
     }
-    return v as BodyZoneSelection[];
+    return (v as BodyZoneSelection[]).map((z) => ({
+      ...z,
+      region: normaliseRegion(z.region),
+    }));
   };
 
   return {
