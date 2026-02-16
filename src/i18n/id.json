@@ -153,6 +153,8 @@
     "languages": "Bahasa"
   },
   "bodyMap": {
+    "female": "Wanita",
+    "male": "Pria",
     "front": "Depan",
     "back": "Belakang",
     "left": "Kiri",

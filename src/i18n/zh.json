@@ -153,6 +153,8 @@
     "languages": "语言"
   },
   "bodyMap": {
+    "female": "女",
+    "male": "男",
     "front": "正面",
     "back": "背面",
     "left": "左",

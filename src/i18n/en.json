@@ -153,6 +153,8 @@
     "languages": "Languages"
   },
   "bodyMap": {
+    "female": "Female",
+    "male": "Male",
     "front": "Front",
     "back": "Back",
     "left": "Left",

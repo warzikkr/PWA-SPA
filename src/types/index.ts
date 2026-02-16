@@ -13,6 +13,7 @@ export interface User {
 /* ── Body Map types ── */
 export type BodySide = 'front' | 'back';
 export type BodyHalf = 'left' | 'right';
+export type BodyGender = 'female' | 'male';
 export type BodyRegion =
   /* Head */
   | 'scalp'

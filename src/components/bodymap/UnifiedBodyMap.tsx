@@ -10,8 +10,8 @@
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BodySide, BodyHalf, BodyRegion, BodyZoneSelection } from '../../types';
-import { FrontBodySVG, BackBodySVG } from './BodySVG';
+import type { BodySide, BodyHalf, BodyRegion, BodyGender, BodyZoneSelection } from '../../types';
+import { getBodySVG } from './BodySVG';
 import {
   BILATERAL,
   FRONT_POSITIONS,
@@ -48,6 +48,8 @@ export interface UnifiedBodyMapProps {
   error?: string;
   /** Smaller sizing for card embeds */
   compact?: boolean;
+  /** Pre-selected gender (readonly mode); edit mode has internal toggle */
+  gender?: BodyGender;
 }
 
 /* ── Component ── */
@@ -62,9 +64,13 @@ export function UnifiedBodyMap({
   label,
   error,
   compact,
+  gender: genderProp,
 }: UnifiedBodyMapProps) {
   const { t } = useTranslation();
   const [activeSide, setActiveSide] = useState<BodySide>('front');
+  const [activeGender, setActiveGender] = useState<BodyGender>(genderProp ?? 'female');
+
+  const gender = genderProp ?? activeGender;
 
   const positions = activeSide === 'front' ? FRONT_POSITIONS : BACK_POSITIONS;
   const entries = getZoneEntries(activeSide);
@@ -98,7 +104,7 @@ export function UnifiedBodyMap({
     }
   };
 
-  /* ── Sizing (identical everywhere per compact flag) ── */
+  /* ── Sizing ── */
 
   const maxW = compact ? 'max-w-[220px]' : 'max-w-[300px]';
 
@@ -112,13 +118,11 @@ export function UnifiedBodyMap({
     const isAvoid = isSelected(avoidZones, activeSide, half, region);
 
     if (mode === 'readonly') {
-      // Avoid overrides focus visually when overlapping
       if (isAvoid) return { className: AVOID_STYLE, label: shortLabel(region, half) };
       if (isFocus) return { className: FOCUS_STYLE, label: shortLabel(region, half) };
       return null;
     }
 
-    // Edit mode — active type is full color, other type is faded
     const isEditTarget = editableType === 'avoid' ? isAvoid : isFocus;
     const isOther = editableType === 'avoid' ? isFocus : isAvoid;
 
@@ -137,35 +141,47 @@ export function UnifiedBodyMap({
     return null;
   };
 
+  /* ── Toggle button helper ── */
+
+  const toggleBtn = (
+    isActive: boolean,
+    onClick: () => void,
+    label: string,
+  ) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-1 py-1 px-2 rounded-md text-xs font-medium transition-colors ${
+        isActive ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-muted'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div className="flex flex-col gap-2">
       {label && <span className="text-sm font-medium text-brand-dark">{label}</span>}
 
-      {/* Front / Back toggle — identical sizing everywhere */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 max-w-[180px] mx-auto">
-        <button
-          type="button"
-          onClick={() => setActiveSide('front')}
-          className={`flex-1 py-1 px-2 rounded-md text-xs font-medium transition-colors ${
-            activeSide === 'front' ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-muted'
-          }`}
-        >
-          {t('bodyMap.front')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveSide('back')}
-          className={`flex-1 py-1 px-2 rounded-md text-xs font-medium transition-colors ${
-            activeSide === 'back' ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-muted'
-          }`}
-        >
-          {t('bodyMap.back')}
-        </button>
+      {/* Gender + Front/Back toggles */}
+      <div className="flex justify-center gap-2">
+        {/* Gender toggle */}
+        {!genderProp && (
+          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+            {toggleBtn(gender === 'female', () => setActiveGender('female'), t('bodyMap.female'))}
+            {toggleBtn(gender === 'male', () => setActiveGender('male'), t('bodyMap.male'))}
+          </div>
+        )}
+        {/* Front / Back toggle */}
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+          {toggleBtn(activeSide === 'front', () => setActiveSide('front'), t('bodyMap.front'))}
+          {toggleBtn(activeSide === 'back', () => setActiveSide('back'), t('bodyMap.back'))}
+        </div>
       </div>
 
       {/* Body SVG + zone overlays */}
       <div className={`relative w-full ${maxW} mx-auto`} style={{ aspectRatio: '1/2' }}>
-        {activeSide === 'front' ? <FrontBodySVG /> : <BackBodySVG />}
+        {getBodySVG(gender, activeSide)}
 
         {entries.map(({ posKey, region, half }) => {
           const pos = positions[posKey];
@@ -174,7 +190,6 @@ export function UnifiedBodyMap({
           const zoneInfo = getZoneStyle(half, region);
 
           if (mode === 'readonly') {
-            // Only render zones that have data
             if (!zoneInfo) return null;
             return (
               <div
@@ -193,7 +208,6 @@ export function UnifiedBodyMap({
             );
           }
 
-          // Edit mode — all zones are clickable
           const isActive = !!zoneInfo && !zoneInfo.className.includes('/25');
           return (
             <button
@@ -262,7 +276,7 @@ export function UnifiedBodyMap({
         </div>
       )}
 
-      {/* Legend — identical in all modes */}
+      {/* Legend */}
       {(focusZones.length > 0 || avoidZones.length > 0) && (
         <div className="flex items-center justify-center gap-4 text-xs text-brand-muted">
           {focusZones.length > 0 && (
