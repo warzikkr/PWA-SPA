@@ -16,10 +16,25 @@
   <body>
     <div id="root"></div>
     <script>
-      // Force old service workers to update immediately
+      // Aggressively clean up old service workers and caches
       if ('serviceWorker' in navigator) {
+        // 1. Delete ALL caches except current version
+        caches.keys().then(function(keys) {
+          keys.forEach(function(key) {
+            if (key !== 'spa-salon-v3') caches.delete(key);
+          });
+        });
+        // 2. Unregister any SW whose scriptURL doesn't match current origin /sw.js
+        //    (kills leftover registrations from old deployments like GitHub Pages)
         navigator.serviceWorker.getRegistrations().then(function(regs) {
-          regs.forEach(function(reg) { reg.update(); });
+          var expected = location.origin + '/sw.js';
+          regs.forEach(function(reg) {
+            if (reg.active && reg.active.scriptURL !== expected) {
+              reg.unregister();
+            } else {
+              reg.update();
+            }
+          });
         });
       }
     </script>

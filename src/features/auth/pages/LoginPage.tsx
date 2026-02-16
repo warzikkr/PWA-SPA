@@ -36,17 +36,22 @@ export function LoginPage() {
     e.preventDefault();
     setError('');
     setSubmitting(true);
-    // Convert username to email for Supabase Auth
-    const email = username.trim().includes('@')
-      ? username.trim()
-      : `${username.trim()}@spadev.app`;
-    const result = await login(email, password);
-    setSubmitting(false);
-    if (result.success) {
-      const user = useAuthStore.getState().currentUser!;
-      navigate(roleRedirects[user.role], { replace: true });
-    } else {
-      setError(result.error ?? 'Invalid credentials');
+    try {
+      const email = username.trim().includes('@')
+        ? username.trim()
+        : `${username.trim()}@spadev.app`;
+      const result = await login(email, password);
+      if (result.success) {
+        const user = useAuthStore.getState().currentUser!;
+        navigate(roleRedirects[user.role], { replace: true });
+      } else {
+        setError(result.error ?? 'Invalid credentials');
+      }
+    } catch (err) {
+      console.error('[Login] Error:', err);
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 

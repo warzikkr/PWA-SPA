@@ -17,21 +17,26 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   loading: true,
 
   login: async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { success: false, error: error.message };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return { success: false, error: error.message };
 
-    const authUser = data.user;
-    if (!authUser) return { success: false, error: 'No auth user after login' };
+      const authUser = data.user;
+      if (!authUser) return { success: false, error: 'No auth user after login' };
 
-    const appUser = await userService.getByAuthUid(authUser.id);
-    if (!appUser) return { success: false, error: 'User profile not found' };
-    if (!appUser.enabled) {
-      await supabase.auth.signOut();
-      return { success: false, error: 'Account disabled' };
+      const appUser = await userService.getByAuthUid(authUser.id);
+      if (!appUser) return { success: false, error: 'User profile not found' };
+      if (!appUser.enabled) {
+        await supabase.auth.signOut();
+        return { success: false, error: 'Account disabled' };
+      }
+
+      set({ currentUser: appUser });
+      return { success: true };
+    } catch (err) {
+      console.error('[Auth] login error:', err);
+      return { success: false, error: err instanceof Error ? err.message : 'Login failed' };
     }
-
-    set({ currentUser: appUser });
-    return { success: true };
   },
 
   logout: async () => {
