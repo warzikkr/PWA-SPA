@@ -18,27 +18,11 @@ async function fetchAppUser(authUid: string, retries = 2): Promise<User | undefi
     try {
       return await userService.getByAuthUid(authUid);
     } catch (err) {
-      console.warn(`[Auth] getByAuthUid attempt ${i + 1}/${retries + 1} failed:`, err);
+      console.warn(`[Auth] getByAuthUid ${i + 1}/${retries + 1} failed:`, err);
       if (i < retries) await new Promise((r) => setTimeout(r, 800 * (i + 1)));
     }
   }
   return undefined;
-}
-
-/** Resolve loading state from a session event. */
-async function resolveSession(
-  session: { user: { id: string } } | null,
-  source: string,
-): Promise<void> {
-  if (!session?.user) {
-    console.info(`[Auth] ${source}: no session`);
-    useAuthStore.setState({ currentUser: null, loading: false });
-    return;
-  }
-  console.info(`[Auth] ${source}: fetching profile…`);
-  const appUser = await fetchAppUser(session.user.id);
-  console.info(`[Auth] ${source}: profile ${appUser ? 'OK' : 'NOT found'}`);
-  useAuthStore.setState({ currentUser: appUser ?? null, loading: false });
 }
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
@@ -53,14 +37,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       const authUser = data.user;
       if (!authUser) return { success: false, error: 'No auth user after login' };
 
-      const appUser = await fetchAppUser(authUser.id);
-      if (!appUser) return { success: false, error: 'User profile not found' };
-      if (!appUser.enabled) {
-        await supabase.auth.signOut();
-        return { success: false, error: 'Account disabled' };
-      }
-
-      set({ currentUser: appUser, loading: false });
+      // Don't call fetchAppUser here — onAuthStateChange SIGNED_IN handles it.
+      // signInWithPassword internally awaits _notifyAllSubscribers, and calling
+      // supabase.from() inside that chain causes circular-await on initializePromise.
       return { success: true };
     } catch (err) {
       console.error('[Auth] login error:', err);
@@ -91,47 +70,42 @@ setTimeout(() => {
 }, 15_000);
 
 /**
- * Single auth listener — handles ALL events including initial session.
+ * Auth event listener.
  *
- * We do NOT call getSession() separately because it can hang
- * when waiting for the internal initializePromise/lock chain.
- * Instead, both INITIAL_SESSION and SIGNED_IN resolve the loading state.
+ * CRITICAL: The callback must NOT be async and must NOT await supabase
+ * operations (like .from().select()). Supabase internally awaits
+ * _notifyAllSubscribers → our callback → which calls getSession() →
+ * which awaits initializePromise → which waits for _notifyAllSubscribers
+ * to complete → CIRCULAR DEADLOCK.
+ *
+ * Solution: use setTimeout(0) to defer DB queries outside the event chain.
  */
-let initialResolved = false;
-
-supabase.auth.onAuthStateChange(async (event, session) => {
+supabase.auth.onAuthStateChange((event, session) => {
   console.info(`[Auth] event: ${event}, hasUser=${!!session?.user}`);
 
-  if (event === 'INITIAL_SESSION') {
-    initialResolved = true;
-    await resolveSession(session, 'INITIAL_SESSION');
-    return;
-  }
-
-  if (event === 'SIGNED_IN') {
-    // If INITIAL_SESSION was missed (race condition), treat SIGNED_IN as initial
-    if (!initialResolved && useAuthStore.getState().loading) {
-      initialResolved = true;
-      await resolveSession(session, 'SIGNED_IN (as initial)');
+  if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    if (!session?.user) {
+      console.info(`[Auth] ${event}: no session`);
+      useAuthStore.setState({ currentUser: null, loading: false });
       return;
     }
-    // Normal SIGNED_IN (e.g. after login)
-    if (session?.user) {
-      const appUser = await fetchAppUser(session.user.id);
-      if (appUser) {
-        useAuthStore.setState({ currentUser: appUser, loading: false });
-      }
-    }
-    return;
-  }
 
-  if (event === 'TOKEN_REFRESHED') {
-    if (session?.user) {
-      const appUser = await fetchAppUser(session.user.id);
-      if (appUser) {
-        useAuthStore.setState({ currentUser: appUser });
+    // Defer profile fetch to break circular-await chain
+    setTimeout(async () => {
+      console.info(`[Auth] ${event}: fetching profile…`);
+      try {
+        const appUser = await fetchAppUser(session.user.id);
+        console.info(`[Auth] ${event}: profile ${appUser ? 'OK' : 'NOT found'}`);
+        if (appUser) {
+          useAuthStore.setState({ currentUser: appUser, loading: false });
+        } else {
+          useAuthStore.setState({ currentUser: null, loading: false });
+        }
+      } catch (err) {
+        console.error(`[Auth] ${event}: fetchAppUser error:`, err);
+        useAuthStore.setState({ currentUser: null, loading: false });
       }
-    }
+    }, 0);
     return;
   }
 

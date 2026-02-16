@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate, Link } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../../stores/authStore';
 import { Button, Input } from '../../../shared/components';
 import type { UserRole } from '../../../types';
@@ -11,7 +11,6 @@ const roleRedirects: Record<UserRole, string> = {
 };
 
 export function LoginPage() {
-  const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.currentUser);
   const loading = useAuthStore((s) => s.loading);
   const login = useAuthStore((s) => s.login);
@@ -20,7 +19,9 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (loading) {
+  // Redirect is handled reactively: when onAuthStateChange sets currentUser,
+  // this component re-renders and the Navigate below fires.
+  if (loading || submitting) {
     return (
       <div className="min-h-full flex items-center justify-center bg-brand-light">
         <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
@@ -41,16 +42,15 @@ export function LoginPage() {
         ? username.trim()
         : `${username.trim()}@spadev.app`;
       const result = await login(email, password);
-      if (result.success) {
-        const user = useAuthStore.getState().currentUser!;
-        navigate(roleRedirects[user.role], { replace: true });
-      } else {
+      if (!result.success) {
         setError(result.error ?? 'Invalid credentials');
+        setSubmitting(false);
       }
+      // On success: don't navigate manually. The SIGNED_IN handler will
+      // set currentUser via setTimeout(0), which triggers re-render → Navigate.
     } catch (err) {
       console.error('[Login] Error:', err);
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
-    } finally {
       setSubmitting(false);
     }
   };
