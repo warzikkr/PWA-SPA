@@ -17,6 +17,7 @@ import { useConfigStore } from '../../../stores/configStore';
 import { useClientStore } from '../../../stores/clientStore';
 import { clientService } from '../../../services/clientService';
 import { Input, SegmentedControl, Select } from '../../../shared/components';
+import { maskContact } from '../../../shared/utils/maskContact';
 import { useKioskInactivity } from '../hooks/useKioskInactivity';
 import type { Client } from '../../../types';
 
@@ -232,7 +233,7 @@ export function ContactsPage() {
 
           {selectedClient && (
             <div className="mt-1.5 flex items-center gap-2 text-xs text-green-700 bg-green-50 rounded-lg px-3 py-1.5">
-              <span>Returning client: {selectedClient.contactMethod} {selectedClient.contactValue}</span>
+              <span>Returning client: {selectedClient.contactMethod} {maskContact(selectedClient.contactMethod, selectedClient.contactValue)}</span>
               <button
                 type="button"
                 onClick={() => {
@@ -258,7 +259,7 @@ export function ContactsPage() {
                 >
                   <div className="font-medium text-brand-dark">{c.fullName}</div>
                   <div className="text-xs text-brand-muted">
-                    {c.contactMethod && `${c.contactMethod}: ${c.contactValue}`}
+                    {c.contactMethod && `${c.contactMethod}: ${maskContact(c.contactMethod, c.contactValue)}`}
                   </div>
                 </button>
               ))}

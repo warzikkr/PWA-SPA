@@ -6,12 +6,13 @@ import { useClientStore } from '../../../stores/clientStore';
 import { useIntakeStore } from '../../../stores/intakeStore';
 import { bookingService } from '../../../services/bookingService';
 import { Button, Input } from '../../../shared/components';
+import { maskContact } from '../../../shared/utils/maskContact';
 import { useKioskInactivity } from '../hooks/useKioskInactivity';
 import type { Booking } from '../../../types';
 
 const DEBOUNCE_MS = 300;
 
-type BookingResult = Booking & { clientName: string };
+type BookingResult = Booking & { clientName: string; clientContactMethod: string; clientContactValue: string };
 
 export function FindBookingPage() {
   useKioskInactivity();
@@ -142,7 +143,14 @@ export function FindBookingPage() {
                 onClick={() => selectBooking(b)}
                 className="p-4 border-2 border-brand-border rounded-lg text-left hover:border-brand-green transition-colors"
               >
-                <div className="font-medium text-brand-dark">{b.clientName}</div>
+                <div className="font-medium text-brand-dark">
+                  {b.clientName}
+                  {b.clientContactMethod && (
+                    <span className="ml-2 text-sm font-normal text-brand-muted">
+                      {maskContact(b.clientContactMethod, b.clientContactValue)}
+                    </span>
+                  )}
+                </div>
                 <div className="text-sm text-brand-muted">
                   {b.startTime ?? '—'} · {b.status}
                   {b.source === 'online' && (

@@ -129,21 +129,23 @@ export const bookingService = {
     return data ? rowToBooking(data as BookingRow) : undefined;
   },
 
-  async searchTodayByName(query: string): Promise<(Booking & { clientName: string })[]> {
+  async searchTodayByName(query: string): Promise<(Booking & { clientName: string; clientContactMethod: string; clientContactValue: string })[]> {
     const q = query.trim();
     if (q.length < 2) return [];
     const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
       .from('bookings')
-      .select('*, clients!inner(full_name)')
+      .select('*, clients!inner(full_name, contact_method, contact_value)')
       .eq('date', today)
       .in('status', ['scheduled', 'assigned'])
       .ilike('clients.full_name', `%${q}%`)
       .order('start_time');
     if (error) throw new Error(`bookingService.searchTodayByName: ${error.message}`);
-    return ((data ?? []) as (BookingRow & { clients: { full_name: string } })[]).map((r) => ({
+    return ((data ?? []) as (BookingRow & { clients: { full_name: string; contact_method: string; contact_value: string } })[]).map((r) => ({
       ...rowToBooking(r),
       clientName: r.clients.full_name,
+      clientContactMethod: r.clients.contact_method,
+      clientContactValue: r.clients.contact_value,
     }));
   },
 
